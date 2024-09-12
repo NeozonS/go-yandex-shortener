@@ -1,6 +1,6 @@
 module github.com/NeozonS/go-shortener-ya.git
 
-go 1.23.0
+go 1.22.7
 
 require (
 	github.com/go-chi/chi/v5 v5.1.0
