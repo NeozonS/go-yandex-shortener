@@ -20,16 +20,16 @@ func NewHandlers(repo storage.Repositories) *Handlers {
 }
 func (u *Handlers) GetHandler(w http.ResponseWriter, r *http.Request) {
 	urlP := chi.URLParam(r, "code")
-	originalUrl, err := u.repo.GetURL(urlP)
+	originalURL, err := u.repo.GetURL(urlP)
 	if urlP == "" || err != nil {
 		http.Error(w, "Запрашиваемая страница не найдена", 400)
 		return
 	}
-	if !strings.HasPrefix(originalUrl, "http://") && !strings.HasPrefix(originalUrl, "https://") {
-		originalUrl = "http://" + originalUrl
+	if !strings.HasPrefix(originalURL, "http://") && !strings.HasPrefix(originalURL, "https://") {
+		originalURL = "http://" + originalURL
 	}
 
-	w.Header().Set("Location", originalUrl)
+	w.Header().Set("Location", originalURL)
 	w.WriteHeader(307)
 
 }
