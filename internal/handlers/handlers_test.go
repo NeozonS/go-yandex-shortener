@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"github.com/NeozonS/go-shortener-ya.git/internal/storage/mapbd"
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -126,9 +127,10 @@ func TestHandlers_GetHandler(t *testing.T) {
 			id := handl.generateShortURL()
 			repo.UpdateURL(tt.url, id)
 			reqGet := httptest.NewRequest(http.MethodGet, "http://localhost:8080/"+id+tt.badid, nil)
+			r := chi.NewRouter()
+			r.Get("/{id}", handl.GetHandler)
 			rr := httptest.NewRecorder()
-			h := http.HandlerFunc((handl.GetHandler))
-			h.ServeHTTP(rr, reqGet)
+			r.ServeHTTP(rr, reqGet)
 			assert.Equal(t, tt.wants.statusCode, rr.Code)
 			assert.Equal(t, tt.wants.url, rr.Header().Get("Location"))
 

@@ -17,7 +17,7 @@ func main() {
 	handler := handlers.NewHandlers(repositories)
 	r.Route("/", func(r chi.Router) {
 		r.Post("/", handler.PostHandler)
-		r.Get("/{code}", handler.GetHandler)
+		r.Get("/{id}", handler.GetHandler)
 		r.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		})
