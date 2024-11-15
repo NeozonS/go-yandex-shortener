@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/NeozonS/go-shortener-ya.git/internal/storage"
 	"github.com/go-chi/chi/v5"
@@ -13,6 +14,10 @@ import (
 
 type Handlers struct {
 	repo storage.Repositories
+}
+type APIJson struct {
+	URL    string `json:"url,omitempty"`
+	Result string `json:"result,omitempty"`
 }
 
 func NewHandlers(repo storage.Repositories) *Handlers {
@@ -51,8 +56,28 @@ func (u *Handlers) PostHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), 400)
 	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(201)
 	fmt.Fprint(w, "http://localhost:8080/"+shortKey)
+}
+
+func (u *Handlers) PostAPI(w http.ResponseWriter, r *http.Request) {
+	b := json.NewDecoder(r.Body)
+	defer r.Body.Close()
+	var Url APIJson
+	err := b.Decode(&Url)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+	}
+	shortKey := u.generateShortURL()
+	err = u.repo.UpdateURL(Url.URL, shortKey)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+	}
+	result := APIJson{Result: "http://localhost:8080/" + shortKey}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	json.NewEncoder(w).Encode(result)
 }
 
 func (u *Handlers) generateShortURL() string {

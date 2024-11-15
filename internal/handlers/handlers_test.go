@@ -10,6 +10,10 @@ import (
 	"testing"
 )
 
+func (u *Handlers) MockgenerateShortURL() string {
+	return "short123"
+}
+
 func TestHandlers_PostHandler(t *testing.T) {
 	type want struct {
 		statusCode int
@@ -134,6 +138,62 @@ func TestHandlers_GetHandler(t *testing.T) {
 			assert.Equal(t, tt.wants.statusCode, rr.Code)
 			assert.Equal(t, tt.wants.url, rr.Header().Get("Location"))
 
+		})
+	}
+
+}
+
+func TestHandlers_PostAPI(t *testing.T) {
+	type want struct {
+		statusCode int
+	}
+
+	tests := []struct {
+		name  string
+		url   string
+		wants want
+	}{
+		{
+			name: "postTest",
+			url:  `{"url": "vk.com"}`,
+			wants: want{
+				statusCode: 201,
+			},
+		},
+		{
+			name: "postTest2",
+			url:  `{"url": "vk.com/user/123"}`,
+			wants: want{
+				statusCode: 201,
+			},
+		},
+		{
+			name: "postTest3",
+			url:  `{"url": "https://google.com/user/123"}`,
+			wants: want{
+				statusCode: 201,
+			},
+		},
+		{
+			name: "postTest4",
+			url:  "",
+			wants: want{
+				statusCode: 400,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+
+		t.Run(tt.name, func(t *testing.T) {
+			reqPost := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewBufferString(tt.url))
+			reqPost.Header.Set("Content-Type", "application/json")
+			repo := mapbd.New()
+			handl := NewHandlers(repo)
+			rr := httptest.NewRecorder()
+			h := http.HandlerFunc(handl.PostAPI)
+			h.ServeHTTP(rr, reqPost)
+			assert.Equal(t, tt.wants.statusCode, rr.Code)
 		})
 	}
 

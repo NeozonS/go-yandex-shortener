@@ -16,6 +16,7 @@ func main() {
 	repositories := mapbd.New()
 	handler := handlers.NewHandlers(repositories)
 	r.Route("/", func(r chi.Router) {
+		r.Post("/api/shorten", handler.PostAPI)
 		r.Post("/", handler.PostHandler)
 		r.Get("/{id}", handler.GetHandler)
 		r.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
