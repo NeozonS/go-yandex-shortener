@@ -64,13 +64,13 @@ func (u *Handlers) PostHandler(w http.ResponseWriter, r *http.Request) {
 func (u *Handlers) PostAPI(w http.ResponseWriter, r *http.Request) {
 	b := json.NewDecoder(r.Body)
 	defer r.Body.Close()
-	var Url APIJson
-	err := b.Decode(&Url)
+	var jsonurl APIJson
+	err := b.Decode(&jsonurl)
 	if err != nil {
 		http.Error(w, err.Error(), 400)
 	}
 	shortKey := u.generateShortURL()
-	err = u.repo.UpdateURL(Url.URL, shortKey)
+	err = u.repo.UpdateURL(jsonurl.URL, shortKey)
 	if err != nil {
 		http.Error(w, err.Error(), 400)
 	}
