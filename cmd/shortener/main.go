@@ -12,10 +12,7 @@ import (
 )
 
 func main() {
-	var config server.Config
-	config = server.Config{
-		ServAddr: ":18900",
-	}
+	config := server.Config{}
 	err := env.Parse(&config)
 	if err != nil {
 		log.Fatalf("Failed to parse env vars: %v", err)
