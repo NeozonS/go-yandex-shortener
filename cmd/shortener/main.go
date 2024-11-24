@@ -9,12 +9,10 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"log"
 	"net/http"
-	"os"
 )
 
 func main() {
 	config := server.Config{}
-	os.Setenv("SERV_ADDR", ":33041")
 	err := env.Parse(&config)
 	if err != nil {
 		log.Fatalf("Failed to parse env vars: %v", err)
