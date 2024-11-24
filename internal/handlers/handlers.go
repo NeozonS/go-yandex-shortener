@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/NeozonS/go-shortener-ya.git/internal/server"
 	"github.com/NeozonS/go-shortener-ya.git/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"io"
@@ -13,15 +14,16 @@ import (
 )
 
 type Handlers struct {
-	repo storage.Repositories
+	repo   storage.Repositories
+	config server.Config
 }
 type APIJson struct {
 	URL    string `json:"url,omitempty"`
 	Result string `json:"result,omitempty"`
 }
 
-func NewHandlers(repo storage.Repositories) *Handlers {
-	return &Handlers{repo}
+func NewHandlers(repo storage.Repositories, config server.Config) *Handlers {
+	return &Handlers{repo, config}
 }
 func (u *Handlers) GetHandler(w http.ResponseWriter, r *http.Request) {
 	urlP := chi.URLParam(r, "id")
@@ -40,6 +42,7 @@ func (u *Handlers) GetHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *Handlers) PostHandler(w http.ResponseWriter, r *http.Request) {
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "Метод для ПостЗапроса, не правильно указан метод.", http.StatusMethodNotAllowed)
 		return
@@ -51,6 +54,7 @@ func (u *Handlers) PostHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
 	shortKey := u.generateShortURL()
 	err = u.repo.UpdateURL(string(b), shortKey)
 	if err != nil {
@@ -58,7 +62,7 @@ func (u *Handlers) PostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(201)
-	fmt.Fprint(w, "http://localhost:8080/"+shortKey)
+	fmt.Fprint(w, u.config.BaseURL+shortKey)
 }
 
 func (u *Handlers) PostAPI(w http.ResponseWriter, r *http.Request) {
@@ -74,7 +78,7 @@ func (u *Handlers) PostAPI(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), 400)
 	}
-	result := APIJson{Result: "http://localhost:8080/" + shortKey}
+	result := APIJson{Result: u.config.BaseURL + shortKey}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(201)
 	json.NewEncoder(w).Encode(result)

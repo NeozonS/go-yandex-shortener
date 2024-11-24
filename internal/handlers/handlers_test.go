@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"github.com/NeozonS/go-shortener-ya.git/internal/server"
 	"github.com/NeozonS/go-shortener-ya.git/internal/storage/mapbd"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
@@ -58,8 +59,9 @@ func TestHandlers_PostHandler(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			reqPost := httptest.NewRequest(http.MethodPost, "/", bytes.NewBufferString(tt.url))
+			config := server.Config{}
 			repo := mapbd.New()
-			handl := NewHandlers(repo)
+			handl := NewHandlers(repo, config)
 			rr := httptest.NewRecorder()
 			h := http.HandlerFunc(handl.PostHandler)
 			h.ServeHTTP(rr, reqPost)
@@ -127,7 +129,8 @@ func TestHandlers_GetHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := mapbd.New()
-			handl := NewHandlers(repo)
+			config := server.Config{}
+			handl := NewHandlers(repo, config)
 			id := handl.generateShortURL()
 			repo.UpdateURL(tt.url, id)
 			reqGet := httptest.NewRequest(http.MethodGet, "http://localhost:8080/"+id+tt.badid, nil)
@@ -189,7 +192,8 @@ func TestHandlers_PostAPI(t *testing.T) {
 			reqPost := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewBufferString(tt.url))
 			reqPost.Header.Set("Content-Type", "application/json")
 			repo := mapbd.New()
-			handl := NewHandlers(repo)
+			config := server.Config{}
+			handl := NewHandlers(repo, config)
 			rr := httptest.NewRecorder()
 			h := http.HandlerFunc(handl.PostAPI)
 			h.ServeHTTP(rr, reqPost)
