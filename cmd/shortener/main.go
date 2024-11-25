@@ -32,5 +32,5 @@ func main() {
 	})
 	log.Printf("Using config: %+v", config)
 	log.Println("Server started at " + config.BaseURL + config.ServAddr)
-	http.ListenAndServe(config.ServAddr, r)
+	http.ListenAndServe(":"+config.ServAddr, r)
 }
