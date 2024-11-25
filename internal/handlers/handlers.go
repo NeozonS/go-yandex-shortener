@@ -61,7 +61,7 @@ func (u *Handlers) PostHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 400)
 	}
 	w.WriteHeader(201)
-	fmt.Fprint(w, u.config.BaseURL+":"+u.config.ServAddr+"/"+shortKey)
+	fmt.Fprint(w, u.config.BaseURL+"/"+shortKey)
 }
 
 func (u *Handlers) PostAPI(w http.ResponseWriter, r *http.Request) {
@@ -77,7 +77,7 @@ func (u *Handlers) PostAPI(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), 400)
 	}
-	result := APIJson{Result: u.config.BaseURL + ":" + u.config.ServAddr + "/" + shortKey}
+	result := APIJson{Result: u.config.BaseURL + "/" + shortKey}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(201)
 	json.NewEncoder(w).Encode(result)

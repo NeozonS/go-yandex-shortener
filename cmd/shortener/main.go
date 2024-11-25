@@ -30,7 +30,6 @@ func main() {
 			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		})
 	})
-	log.Printf("Using config: %+v", config)
-	log.Println("Server started at " + config.BaseURL + config.ServAddr)
-	http.ListenAndServe(":"+config.ServAddr, r)
+	log.Println("Server started at " + config.ServAddr)
+	http.ListenAndServe(config.ServAddr, r)
 }
