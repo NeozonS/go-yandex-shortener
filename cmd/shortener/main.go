@@ -3,6 +3,8 @@ package main
 import (
 	"github.com/NeozonS/go-shortener-ya.git/internal/handlers"
 	"github.com/NeozonS/go-shortener-ya.git/internal/server"
+	"github.com/NeozonS/go-shortener-ya.git/internal/storage"
+	"github.com/NeozonS/go-shortener-ya.git/internal/storage/file"
 	"github.com/NeozonS/go-shortener-ya.git/internal/storage/mapbd"
 	"github.com/caarlos0/env/v11"
 	"github.com/go-chi/chi/v5"
@@ -20,7 +22,8 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-	repositories := mapbd.New()
+
+	repositories := choiseStorage(config.FileStorage)
 	handler := handlers.NewHandlers(repositories, config)
 	r.Route("/", func(r chi.Router) {
 		r.Post("/api/shorten", handler.PostAPI)
@@ -32,4 +35,11 @@ func main() {
 	})
 	log.Println("Server started at " + config.ServAddr)
 	http.ListenAndServe(config.ServAddr, r)
+}
+
+func choiseStorage(storage string) storage.Repositories {
+	if storage == "" {
+		return mapbd.New()
+	}
+	return file.NewFileStorage(storage)
 }
