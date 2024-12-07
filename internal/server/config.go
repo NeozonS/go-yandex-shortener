@@ -12,7 +12,7 @@ type Config struct {
 	FileStorage string `env:"FILE_STORAGE_PATH"`
 }
 
-func NewConfig() *Config {
+func NewConfig() Config {
 	config := Config{}
 	err := env.Parse(&config)
 	if err != nil {
@@ -30,5 +30,5 @@ func NewConfig() *Config {
 
 	}
 	flag.Parse()
-	return &config
+	return config
 }
