@@ -22,8 +22,8 @@ type APIJson struct {
 	Result string `json:"result,omitempty"`
 }
 
-func NewHandlers(repo storage.Repositories, config server.Config) *Handlers {
-	return &Handlers{repo, config}
+func NewHandlers(repo storage.Repositories, config *server.Config) *Handlers {
+	return &Handlers{repo, *config}
 }
 func (u *Handlers) GetHandler(w http.ResponseWriter, r *http.Request) {
 	urlP := chi.URLParam(r, "id")
