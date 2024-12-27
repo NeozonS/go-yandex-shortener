@@ -3,26 +3,32 @@ package mapbd
 import "fmt"
 
 type MapBD struct {
-	Urls map[string]string
+	Urls map[string]map[string]string
 }
 
-func (m *MapBD) GetURL(id string) (string, error) {
-	u, ok := m.Urls[id]
+func (m *MapBD) GetURL(shortURL string) (string, error) {
+	for _, u := range m.Urls {
+		if originalURL, ok := u[shortURL]; ok {
+			return originalURL, nil
+		}
+	}
+	return "", fmt.Errorf("short url not found for %s", shortURL)
+}
+func (m *MapBD) GetAllURL(userID string) (map[string]string, error) {
+	u, ok := m.Urls[userID]
 	if !ok {
-		return "", fmt.Errorf("url not found for %s", id)
+		return nil, fmt.Errorf("user not found for %s", userID)
 	}
 	return u, nil
 }
-func (m *MapBD) UpdateURL(url, id string) error {
-	if url == "" {
-		return fmt.Errorf("url not recognized")
+
+func (m *MapBD) UpdateURL(userID, shortURL, originalURL string) error {
+	if _, ok := m.Urls[userID]; !ok {
+		m.Urls[userID] = make(map[string]string)
 	}
-	if id == "" {
-		return fmt.Errorf("id not created")
-	}
-	m.Urls[id] = url
+	m.Urls[userID][shortURL] = originalURL
 	return nil
 }
 func New() *MapBD {
-	return &MapBD{Urls: make(map[string]string)}
+	return &MapBD{Urls: make(map[string]map[string]string)}
 }

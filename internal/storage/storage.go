@@ -1,6 +1,7 @@
 package storage
 
 type Repositories interface {
-	GetURL(url string) (string, error)
-	UpdateURL(url, id string) error
+	GetURL(shortURL string) (string, error)
+	UpdateURL(userID, shortURL, originalURL string) error
+	GetAllURLs(userID string) (map[string]string, error)
 }
