@@ -2,6 +2,9 @@ package middleware
 
 import (
 	"compress/gzip"
+	"context"
+	"github.com/NeozonS/go-shortener-ya.git/internal/utils"
+	"github.com/google/uuid"
 	"io"
 	"net/http"
 	"strings"
@@ -47,5 +50,23 @@ func GzipResponseMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func CookieMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		userID, err := utils.GetUserIDFromCookie(r)
+		if err != nil {
+			http.Error(w, "пиздец", http.StatusBadRequest)
+			return
+		}
+		if userID == "" {
+			newUserID := uuid.New().String()
+			utils.SetCookie(w, newUserID)
+			ctx := context.WithValue(r.Context(), "userID", newUserID)
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return
+		}
+		ctx := context.WithValue(r.Context(), "userID", userID)
+		next.ServeHTTP(w, r.WithContext(ctx))
+		return
 
-func
+	})
+}

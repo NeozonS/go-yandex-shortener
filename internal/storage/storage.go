@@ -1,7 +1,9 @@
 package storage
 
-type Repositories interface {
+import "github.com/NeozonS/go-shortener-ya.git/internal/storage/models"
+
+type Repository interface {
 	GetURL(shortURL string) (string, error)
 	UpdateURL(userID, shortURL, originalURL string) error
-	GetAllURLs(userID string) (map[string]string, error)
+	GetAllURL(userID string) ([]models.LinkPair, error)
 }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"github.com/NeozonS/go-shortener-ya.git/internal/server"
 	"github.com/NeozonS/go-shortener-ya.git/internal/storage/mapbd"
+	"github.com/NeozonS/go-shortener-ya.git/internal/utils"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -131,9 +132,10 @@ func TestHandlers_GetHandler(t *testing.T) {
 			repo := mapbd.New()
 			config := server.Config{}
 			handl := NewHandlers(repo, config)
-			id := handl.generateShortURL()
-			repo.UpdateURL(tt.url, id)
-			reqGet := httptest.NewRequest(http.MethodGet, "http://localhost:8080/"+id+tt.badid, nil)
+			userID := "123"
+			shortURL := utils.GenerateShortURL()
+			repo.UpdateURL(userID, shortURL, tt.url)
+			reqGet := httptest.NewRequest(http.MethodGet, "http://localhost:8080/"+shortURL+tt.badid, nil)
 			r := chi.NewRouter()
 			r.Get("/{id}", handl.GetHandler)
 			rr := httptest.NewRecorder()
