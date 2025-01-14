@@ -54,7 +54,7 @@ func CookieMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userID, err := utils.GetUserIDFromCookie(r)
 		if err != nil {
-			http.Error(w, "пиздец", http.StatusBadRequest)
+			http.Error(w, "Didn't decipher it ", http.StatusBadRequest)
 			return
 		}
 		if userID == "" {
@@ -66,7 +66,5 @@ func CookieMiddleware(next http.Handler) http.Handler {
 		}
 		ctx := context.WithValue(r.Context(), "userID", userID)
 		next.ServeHTTP(w, r.WithContext(ctx))
-		return
-
 	})
 }

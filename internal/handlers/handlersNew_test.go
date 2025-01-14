@@ -2,9 +2,10 @@ package handlers
 
 import (
 	"bytes"
+	"context"
+	"errors"
 	"github.com/NeozonS/go-shortener-ya.git/internal/server"
-	"github.com/NeozonS/go-shortener-ya.git/internal/storage/mapbd"
-	"github.com/NeozonS/go-shortener-ya.git/internal/utils"
+	"github.com/NeozonS/go-shortener-ya.git/internal/storage/models"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -14,6 +15,36 @@ import (
 
 func (u *Handlers) MockgenerateShortURL() string {
 	return "short123"
+}
+
+type MockRepo struct {
+	UpdateURLFunc func(userID, shortURL, originURL string) error
+	GetURLFunc    func(shortURL string) (string, error)
+	GetAllURLFunc func(userID string) ([]models.LinkPair, error)
+}
+
+// UpdateURL реализует метод UpdateURL из интерфейса storage.Repository.
+func (m *MockRepo) UpdateURL(userID, shortURL, originURL string) error {
+	if m.UpdateURLFunc != nil {
+		return m.UpdateURLFunc(userID, shortURL, originURL)
+	}
+	return nil
+}
+
+// GetURL реализует метод GetURL из интерфейса storage.Repository.
+func (m *MockRepo) GetURL(shortURL string) (string, error) {
+	if m.GetURLFunc != nil {
+		return m.GetURLFunc(shortURL)
+	}
+	return "", nil
+}
+
+// GetAllURL реализует метод GetAllURL из интерфейса storage.Repository.
+func (m *MockRepo) GetAllURL(userID string) ([]models.LinkPair, error) {
+	if m.GetAllURLFunc != nil {
+		return m.GetAllURLFunc(userID)
+	}
+	return []models.LinkPair{}, nil
 }
 
 func TestHandlers_PostHandler(t *testing.T) {
@@ -60,9 +91,11 @@ func TestHandlers_PostHandler(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			reqPost := httptest.NewRequest(http.MethodPost, "/", bytes.NewBufferString(tt.url))
+			ctx := context.WithValue(reqPost.Context(), "userID", "testUserID")
+			reqPost = reqPost.WithContext(ctx)
+			mockRepo := &MockRepo{}
 			config := server.Config{}
-			repo := mapbd.New()
-			handl := NewHandlers(repo, config)
+			handl := NewHandlers(mockRepo, config)
 			rr := httptest.NewRecorder()
 			h := http.HandlerFunc(handl.PostHandler)
 			h.ServeHTTP(rr, reqPost)
@@ -75,77 +108,94 @@ func TestHandlers_PostHandler(t *testing.T) {
 func TestHandlers_GetHandler(t *testing.T) {
 	type want struct {
 		statusCode int
-		url        string
+		location   string
+		response   string
 	}
 
 	tests := []struct {
-		name  string
-		url   string
-		badid string
-		wants want
+		name       string
+		id         string
+		mockGetURL func(shortURL string) (string, error)
+		wants      want
 	}{
 		{
-			name: "getTest",
-			url:  "http://vk.com",
+			name: "getTest - успешный запрос с http",
+			id:   "abc123",
+			mockGetURL: func(shortURL string) (string, error) {
+				return "http://vk.com", nil
+			},
 			wants: want{
 				statusCode: 307,
-				url:        "http://vk.com",
+				location:   "http://vk.com",
+				response:   "",
 			},
 		},
 		{
-			name: "getTest2",
-			url:  "vk.com",
+			name: "getTest2 - успешный запрос без схемы",
+			id:   "abc123",
+			mockGetURL: func(shortURL string) (string, error) {
+				return "vk.com", nil
+			},
 			wants: want{
 				statusCode: 307,
-				url:        "http://vk.com",
+				location:   "http://vk.com",
+				response:   "",
 			},
 		},
 		{
-			name: "getTest3",
-			url:  "google.com",
-			wants: want{
-				statusCode: 307,
-				url:        "http://google.com",
+			name: "getTest3 - ошибка: URL не найден",
+			id:   "abc123",
+			mockGetURL: func(shortURL string) (string, error) {
+				return "", errors.New("URL not found")
 			},
-		},
-		{
-			name: "getTest4",
-			url:  "",
 			wants: want{
 				statusCode: 400,
-				url:        "",
-			},
-		},
-		{
-			name:  "getTest5",
-			url:   "google.com",
-			badid: "123",
-			wants: want{
-				statusCode: 400,
-				url:        "",
+				location:   "",
+				response:   "Запрашиваемая страница не найдена\n",
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo := mapbd.New()
+			// Мок репозитория
+			mockRepo := &MockRepo{
+				GetURLFunc: tt.mockGetURL,
+			}
+
+			// Конфигурация
 			config := server.Config{}
-			handl := NewHandlers(repo, config)
-			userID := "123"
-			shortURL := utils.GenerateShortURL()
-			repo.UpdateURL(userID, shortURL, tt.url)
-			reqGet := httptest.NewRequest(http.MethodGet, "http://localhost:8080/"+shortURL+tt.badid, nil)
+
+			// Создаем обработчик
+			handl := NewHandlers(mockRepo, config)
+
+			// Создаем запрос
+			reqGet := httptest.NewRequest(http.MethodGet, "http://localhost:8080/"+tt.id, nil)
+
+			// Добавляем userID в контекст (если нужно)
+			ctx := context.WithValue(reqGet.Context(), "userID", "testUserID")
+			reqGet = reqGet.WithContext(ctx)
+
+			// Записываем ответ
+			rr := httptest.NewRecorder()
+
+			// Используем chi для маршрутизации
 			r := chi.NewRouter()
 			r.Get("/{id}", handl.GetHandler)
-			rr := httptest.NewRecorder()
 			r.ServeHTTP(rr, reqGet)
-			assert.Equal(t, tt.wants.statusCode, rr.Code)
-			assert.Equal(t, tt.wants.url, rr.Header().Get("Location"))
 
+			// Проверяем статус код
+			assert.Equal(t, tt.wants.statusCode, rr.Code)
+
+			// Проверяем заголовок Location
+			assert.Equal(t, tt.wants.location, rr.Header().Get("Location"))
+
+			// Проверяем тело ответа (для ошибок)
+			if tt.wants.response != "" {
+				assert.Equal(t, tt.wants.response, rr.Body.String())
+			}
 		})
 	}
-
 }
 
 func TestHandlers_PostAPI(t *testing.T) {
@@ -193,7 +243,9 @@ func TestHandlers_PostAPI(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			reqPost := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewBufferString(tt.url))
 			reqPost.Header.Set("Content-Type", "application/json")
-			repo := mapbd.New()
+			ctx := context.WithValue(reqPost.Context(), "userID", "testUserID")
+			reqPost = reqPost.WithContext(ctx)
+			repo := &MockRepo{}
 			config := server.Config{}
 			handl := NewHandlers(repo, config)
 			rr := httptest.NewRecorder()

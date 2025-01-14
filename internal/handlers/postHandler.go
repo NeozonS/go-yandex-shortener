@@ -18,6 +18,10 @@ func (u *Handlers) PostHandler(w http.ResponseWriter, r *http.Request) {
 
 	}
 	originURL := string(b)
+	if originURL == "" {
+		http.Error(w, "URL cannot be empty", http.StatusBadRequest)
+		return
+	}
 	if !strings.HasPrefix(string(b), "http://") && !strings.HasPrefix(string(b), "https://") {
 		originURL = "http://" + originURL
 	}
