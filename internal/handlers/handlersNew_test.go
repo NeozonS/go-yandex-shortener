@@ -13,6 +13,10 @@ import (
 	"testing"
 )
 
+type contextKey string
+
+const userIDKey contextKey = "userID"
+
 func (u *Handlers) MockgenerateShortURL() string {
 	return "short123"
 }
@@ -91,7 +95,7 @@ func TestHandlers_PostHandler(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			reqPost := httptest.NewRequest(http.MethodPost, "/", bytes.NewBufferString(tt.url))
-			ctx := context.WithValue(reqPost.Context(), "userID", "testUserID")
+			ctx := context.WithValue(reqPost.Context(), userIDKey, "testUserID")
 			reqPost = reqPost.WithContext(ctx)
 			mockRepo := &MockRepo{}
 			config := server.Config{}
@@ -173,7 +177,7 @@ func TestHandlers_GetHandler(t *testing.T) {
 			reqGet := httptest.NewRequest(http.MethodGet, "http://localhost:8080/"+tt.id, nil)
 
 			// Добавляем userID в контекст (если нужно)
-			ctx := context.WithValue(reqGet.Context(), "userID", "testUserID")
+			ctx := context.WithValue(reqGet.Context(), userIDKey, "testUserID")
 			reqGet = reqGet.WithContext(ctx)
 
 			// Записываем ответ
@@ -243,7 +247,7 @@ func TestHandlers_PostAPI(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			reqPost := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewBufferString(tt.url))
 			reqPost.Header.Set("Content-Type", "application/json")
-			ctx := context.WithValue(reqPost.Context(), "userID", "testUserID")
+			ctx := context.WithValue(reqPost.Context(), userIDKey, "testUserID")
 			reqPost = reqPost.WithContext(ctx)
 			repo := &MockRepo{}
 			config := server.Config{}
