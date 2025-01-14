@@ -24,7 +24,7 @@ func (m *MapBD) GetAllURL(userID string) ([]models.LinkPair, error) {
 	}
 	userLink := make([]models.LinkPair, 0, len(u))
 	for shortURL, originalURL := range u {
-		userLink = append(userLink, models.LinkPair{shortURL, originalURL})
+		userLink = append(userLink, models.LinkPair{ShortURL: shortURL, LongURL: originalURL}
 	}
 	if len(userLink) == 0 {
 		return nil, fmt.Errorf("user not found for %s", userID)

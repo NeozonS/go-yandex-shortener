@@ -11,7 +11,7 @@ import (
 type Storage struct {
 	file *os.File
 }
-type UserUrl struct {
+type UserURL struct {
 	UserID string            `json:"user_id"`
 	Links  []models.LinkPair `json:"links"`
 }
@@ -47,7 +47,7 @@ func (m *Storage) GetAllURL(userID string) ([]models.LinkPair, error) {
 
 	decoder := json.NewDecoder(file)
 	for {
-		var pair UserUrl
+		var pair UserURL
 		err := decoder.Decode(&pair)
 		if err != nil {
 			if err == io.EOF {
@@ -69,8 +69,8 @@ func (m *Storage) UpdateURL(userID, shortURL, originalURL string) error {
 	}
 	defer file.Close()
 
-	pair := models.LinkPair{shortURL, originalURL}
-	user := UserUrl{UserID: userID, Links: []models.LinkPair{pair}}
+	pair := models.LinkPair{ShortURL: shortURL, LongURL: originalURL}
+	user := UserURL{UserID: userID, Links: []models.LinkPair{pair}}
 
 	encoder := json.NewEncoder(file)
 	return encoder.Encode(&user)

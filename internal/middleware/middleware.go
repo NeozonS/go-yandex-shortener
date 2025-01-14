@@ -10,6 +10,10 @@ import (
 	"strings"
 )
 
+type contextKey string
+
+const userIDKey contextKey = "userID"
+
 type gzipResponseWriter struct {
 	io.Writer
 	http.ResponseWriter
@@ -60,7 +64,7 @@ func CookieMiddleware(next http.Handler) http.Handler {
 		if userID == "" {
 			newUserID := uuid.New().String()
 			utils.SetCookie(w, newUserID)
-			ctx := context.WithValue(r.Context(), "userID", newUserID)
+			ctx := context.WithValue(r.Context(), userIDKey, newUserID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
