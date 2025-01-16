@@ -6,14 +6,9 @@ import (
 	"github.com/NeozonS/go-shortener-ya.git/internal/utils"
 	"github.com/google/uuid"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 )
-
-type contextKey string
-
-const userIDKey contextKey = "userID"
 
 type gzipResponseWriter struct {
 	io.Writer
@@ -61,14 +56,12 @@ func CookieMiddleware(next http.Handler) http.Handler {
 		if err != nil || userID == "" {
 			newUserID := uuid.New().String()
 			utils.SetCookie(w, newUserID)
-			ctx := context.WithValue(r.Context(), userIDKey, newUserID)
-			log.Printf("New userID generated: %s", newUserID)
+			ctx := context.WithValue(r.Context(), "userID", newUserID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), userIDKey, userID)
-		log.Printf("UserID found in cookie: %s", userID)
+		ctx := context.WithValue(r.Context(), "userID", userID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

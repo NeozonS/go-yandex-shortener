@@ -20,9 +20,9 @@ func main() {
 	handler := handlers.NewHandlers(repositories, config)
 
 	r := chi.NewRouter()
+	r.Use(middleware.CookieMiddleware)
 	r.Use(middleware.GzipRequestMiddleware)
 	r.Use(middleware.GzipResponseMiddleware)
-	r.Use(middleware.CookieMiddleware)
 	r.Use(chiMiddleware.Logger)
 	r.Use(chiMiddleware.Recoverer)
 	r.Route("/", func(r chi.Router) {
