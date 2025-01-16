@@ -19,7 +19,11 @@ func (u *Handlers) PostAPI(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 400)
 	}
 	shortURL := u.config.BaseURL + "/" + utils.GenerateShortURL()
-	userID := r.Context().Value("userID").(string)
+	userID, ok := utils.GetUserID(r.Context())
+	if !ok || userID == "" {
+		http.Error(w, "userID not found", http.StatusUnauthorized)
+		return
+	}
 	err = u.repo.UpdateURL(userID, shortURL, jsonurl.URL)
 	if err != nil {
 		http.Error(w, err.Error(), 400)

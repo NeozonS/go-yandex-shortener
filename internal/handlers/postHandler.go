@@ -8,9 +8,7 @@ import (
 	"strings"
 )
 
-type contextKey string
-
-const userIDKey contextKey = "userID"
+type UserIDKey struct{}
 
 func (u *Handlers) PostHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
@@ -30,9 +28,9 @@ func (u *Handlers) PostHandler(w http.ResponseWriter, r *http.Request) {
 		originURL = "http://" + originURL
 	}
 	shortURL := u.config.BaseURL + "/" + utils.GenerateShortURL()
-	userID, ok := r.Context().Value(userIDKey).(string)
-	if !ok {
-		http.Error(w, "User ID not found in context", http.StatusUnauthorized)
+	userID, ok := utils.GetUserID(r.Context())
+	if !ok || userID == "" {
+		http.Error(w, "userID not found", http.StatusUnauthorized)
 		return
 	}
 	err = u.repo.UpdateURL(userID, shortURL, originURL)

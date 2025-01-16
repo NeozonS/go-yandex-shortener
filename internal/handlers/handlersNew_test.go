@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/NeozonS/go-shortener-ya.git/internal/server"
 	"github.com/NeozonS/go-shortener-ya.git/internal/storage/models"
+	"github.com/NeozonS/go-shortener-ya.git/internal/utils"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -91,7 +92,7 @@ func TestHandlers_PostHandler(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			reqPost := httptest.NewRequest(http.MethodPost, "/", bytes.NewBufferString(tt.url))
-			ctx := context.WithValue(reqPost.Context(), userIDKey, "testUserID")
+			ctx := context.WithValue(reqPost.Context(), UserIDKey{}, "testUserID")
 			reqPost = reqPost.WithContext(ctx)
 			mockRepo := &MockRepo{}
 			config := server.Config{}
@@ -173,7 +174,7 @@ func TestHandlers_GetHandler(t *testing.T) {
 			reqGet := httptest.NewRequest(http.MethodGet, "http://localhost:8080/"+tt.id, nil)
 
 			// Добавляем userID в контекст (если нужно)
-			ctx := context.WithValue(reqGet.Context(), userIDKey, "testUserID")
+			ctx := context.WithValue(reqGet.Context(), UserIDKey{}, "testUserID")
 			reqGet = reqGet.WithContext(ctx)
 
 			// Записываем ответ
@@ -243,7 +244,7 @@ func TestHandlers_PostAPI(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			reqPost := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewBufferString(tt.url))
 			reqPost.Header.Set("Content-Type", "application/json")
-			ctx := context.WithValue(reqPost.Context(), userIDKey, "testUserID")
+			ctx := utils.WithUserID(reqPost.Context(), "testUserID")
 			reqPost = reqPost.WithContext(ctx)
 			repo := &MockRepo{}
 			config := server.Config{}
