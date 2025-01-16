@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"github.com/NeozonS/go-shortener-ya.git/internal/server"
 	"github.com/NeozonS/go-shortener-ya.git/internal/storage/models"
@@ -92,7 +91,7 @@ func TestHandlers_PostHandler(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			reqPost := httptest.NewRequest(http.MethodPost, "/", bytes.NewBufferString(tt.url))
-			ctx := context.WithValue(reqPost.Context(), UserIDKey{}, "testUserID")
+			ctx := utils.WithUserID(reqPost.Context(), "testUserID")
 			reqPost = reqPost.WithContext(ctx)
 			mockRepo := &MockRepo{}
 			config := server.Config{}
@@ -174,7 +173,7 @@ func TestHandlers_GetHandler(t *testing.T) {
 			reqGet := httptest.NewRequest(http.MethodGet, "http://localhost:8080/"+tt.id, nil)
 
 			// Добавляем userID в контекст (если нужно)
-			ctx := context.WithValue(reqGet.Context(), UserIDKey{}, "testUserID")
+			ctx := utils.WithUserID(reqGet.Context(), "testUserID")
 			reqGet = reqGet.WithContext(ctx)
 
 			// Записываем ответ
