@@ -13,10 +13,6 @@ import (
 	"testing"
 )
 
-type contextKey string
-
-const userIDKey contextKey = "userID"
-
 func (u *Handlers) MockgenerateShortURL() string {
 	return "short123"
 }
