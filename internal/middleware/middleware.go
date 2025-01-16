@@ -6,6 +6,7 @@ import (
 	"github.com/NeozonS/go-shortener-ya.git/internal/utils"
 	"github.com/google/uuid"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -58,17 +59,22 @@ func CookieMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userID, err := utils.GetUserIDFromCookie(r)
 		if err != nil {
-			http.Error(w, "Didn't decipher it ", http.StatusBadRequest)
+			log.Printf("Error getting userID from cookie: %v", err)
+			http.Error(w, "Failed to decrypt userID", http.StatusBadRequest)
 			return
 		}
+
 		if userID == "" {
 			newUserID := uuid.New().String()
 			utils.SetCookie(w, newUserID)
 			ctx := context.WithValue(r.Context(), userIDKey, newUserID)
+			log.Printf("New userID generated: %s", newUserID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
+
 		ctx := context.WithValue(r.Context(), userIDKey, userID)
+		log.Printf("UserID found in cookie: %s", userID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
