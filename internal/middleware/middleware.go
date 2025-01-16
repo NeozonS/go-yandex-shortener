@@ -60,12 +60,12 @@ func CookieMiddleware(next http.Handler) http.Handler {
 		if err != nil || userID == "" {
 			newUserID := uuid.New().String()
 			utils.SetCookie(w, newUserID)
-			ctx := context.WithValue(r.Context(), "userID", newUserID)
+			ctx := context.WithValue(r.Context(), userIDKey, newUserID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "userID", userID)
+		ctx := context.WithValue(r.Context(), userIDKey, userID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
