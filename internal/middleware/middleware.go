@@ -58,13 +58,7 @@ func GzipResponseMiddleware(next http.Handler) http.Handler {
 func CookieMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userID, err := utils.GetUserIDFromCookie(r)
-		if err != nil {
-			log.Printf("Error getting userID from cookie: %v", err)
-			http.Error(w, "Failed to decrypt userID", http.StatusBadRequest)
-			return
-		}
-
-		if userID == "" {
+		if err != nil || userID == "" {
 			newUserID := uuid.New().String()
 			utils.SetCookie(w, newUserID)
 			ctx := context.WithValue(r.Context(), userIDKey, newUserID)
