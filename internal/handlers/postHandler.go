@@ -8,6 +8,10 @@ import (
 	"strings"
 )
 
+type contextKey string
+
+const userIDKey contextKey = "userID"
+
 func (u *Handlers) PostHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	b, err := io.ReadAll(r.Body)
@@ -26,7 +30,7 @@ func (u *Handlers) PostHandler(w http.ResponseWriter, r *http.Request) {
 		originURL = "http://" + originURL
 	}
 	shortURL := u.config.BaseURL + "/" + utils.GenerateShortURL()
-	userID, ok := r.Context().Value("userID").(string)
+	userID, ok := r.Context().Value(userIDKey).(string)
 	if !ok {
 		http.Error(w, "User ID not found in context", http.StatusUnauthorized)
 		return

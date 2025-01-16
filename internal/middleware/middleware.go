@@ -10,6 +10,10 @@ import (
 	"strings"
 )
 
+type contextKey string
+
+const userIDKey contextKey = "userID"
+
 type gzipResponseWriter struct {
 	io.Writer
 	http.ResponseWriter
