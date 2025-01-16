@@ -26,7 +26,11 @@ func (u *Handlers) PostHandler(w http.ResponseWriter, r *http.Request) {
 		originURL = "http://" + originURL
 	}
 	shortURL := u.config.BaseURL + "/" + utils.GenerateShortURL()
-	userID := r.Context().Value("userID").(string)
+	userID, ok := r.Context().Value("userID").(string)
+	if !ok {
+		http.Error(w, "User ID not found in context", http.StatusUnauthorized)
+		return
+	}
 	err = u.repo.UpdateURL(userID, shortURL, originURL)
 	if err != nil {
 		http.Error(w, err.Error(), 400)
