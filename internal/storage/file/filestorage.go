@@ -78,7 +78,7 @@ func (m *Storage) UpdateURL(userID, shortURL, originalURL string) error {
 
 func NewFileStorage(filename string) *Storage {
 	//file, err := os.Create(filename)
-	file, err := os.OpenFile(filename, os.O_RDONLY|os.O_CREATE, 0777)
+	file, err := os.OpenFile(filename, os.O_RDONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return nil
 	}
