@@ -17,12 +17,12 @@ type UserURL struct {
 }
 
 func (m *Storage) GetURL(shortURL string) (string, error) {
-	file, err := os.Open(m.file.Name())
+	_, err := m.file.Seek(0, 0)
 	if err != nil {
 		return "", err
 	}
-	defer file.Close()
-	decoder := json.NewDecoder(file)
+
+	decoder := json.NewDecoder(m.file)
 	for {
 		var pair models.LinkPair
 		err := decoder.Decode(&pair)
@@ -39,11 +39,10 @@ func (m *Storage) GetURL(shortURL string) (string, error) {
 	return "", errors.New("url not found")
 }
 func (m *Storage) GetAllURL(userID string) ([]models.LinkPair, error) {
-	file, err := os.Open(m.file.Name())
+	file, err := m.file.Seek(0, 0)
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
 
 	decoder := json.NewDecoder(file)
 	var result []models.LinkPair
@@ -67,11 +66,10 @@ func (m *Storage) GetAllURL(userID string) ([]models.LinkPair, error) {
 }
 
 func (m *Storage) UpdateURL(userID, shortURL, originalURL string) error {
-	file, err := os.OpenFile(m.file.Name(), os.O_WRONLY|os.O_APPEND, 0777)
+	file, err := m.file.Seek(0, 2)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
 
 	pair := models.LinkPair{ShortURL: shortURL, LongURL: originalURL}
 	user := UserURL{UserID: userID, Links: []models.LinkPair{pair}}
@@ -82,7 +80,7 @@ func (m *Storage) UpdateURL(userID, shortURL, originalURL string) error {
 
 func NewFileStorage(filename string) *Storage {
 	//file, err := os.Create(filename)
-	file, err := os.OpenFile(filename, os.O_RDONLY|os.O_CREATE, 0666)
+	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		return nil
 	}
