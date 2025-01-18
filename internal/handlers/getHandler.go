@@ -9,7 +9,11 @@ import (
 func (u *Handlers) GetHandler(w http.ResponseWriter, r *http.Request) {
 	urlP := chi.URLParam(r, "id")
 	originalURL, err := u.repo.GetURL(u.config.BaseURL + "/" + urlP)
-	if urlP == "" || err != nil {
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if urlP == "" {
 		http.Error(w, "Запрашиваемая страница не найдена", 400)
 		return
 	}

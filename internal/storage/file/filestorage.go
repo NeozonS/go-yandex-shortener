@@ -25,16 +25,17 @@ func (m *Storage) GetURL(shortURL string) (string, error) {
 
 	decoder := json.NewDecoder(file)
 	for {
-		var pair models.LinkPair
-		err := decoder.Decode(&pair)
-		if err != nil {
+		var users UserURL
+		if err := decoder.Decode(&users); err != nil {
 			if err == io.EOF {
 				break
 			}
 			return "", err
 		}
-		if pair.ShortURL == shortURL {
-			return pair.LongURL, nil
+		for _, link := range users.Links {
+			if link.ShortURL == shortURL {
+				return link.LongURL, nil
+			}
 		}
 	}
 	return "", errors.New("url not found")
