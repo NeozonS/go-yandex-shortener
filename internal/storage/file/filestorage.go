@@ -46,6 +46,7 @@ func (m *Storage) GetAllURL(userID string) ([]models.LinkPair, error) {
 	defer file.Close()
 
 	decoder := json.NewDecoder(file)
+	var result []models.LinkPair
 	for {
 		var pair UserURL
 		err := decoder.Decode(&pair)
@@ -56,8 +57,11 @@ func (m *Storage) GetAllURL(userID string) ([]models.LinkPair, error) {
 			return nil, err
 		}
 		if pair.UserID == userID {
-			return pair.Links, nil
+			result = append(result, pair.Links...)
 		}
+	}
+	if len(result) > 0 {
+		return result, nil
 	}
 	return nil, errors.New("user ID not found")
 }
