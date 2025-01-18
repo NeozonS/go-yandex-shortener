@@ -39,12 +39,12 @@ func (m *Storage) GetURL(shortURL string) (string, error) {
 	return "", errors.New("url not found")
 }
 func (m *Storage) GetAllURL(userID string) ([]models.LinkPair, error) {
-	file, err := m.file.Seek(0, 0)
+	_, err := m.file.Seek(0, 0)
 	if err != nil {
 		return nil, err
 	}
 
-	decoder := json.NewDecoder(file)
+	decoder := json.NewDecoder(m.file)
 	var result []models.LinkPair
 	for {
 		var pair UserURL
@@ -66,7 +66,7 @@ func (m *Storage) GetAllURL(userID string) ([]models.LinkPair, error) {
 }
 
 func (m *Storage) UpdateURL(userID, shortURL, originalURL string) error {
-	file, err := m.file.Seek(0, 2)
+	_, err := m.file.Seek(0, 2)
 	if err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func (m *Storage) UpdateURL(userID, shortURL, originalURL string) error {
 	pair := models.LinkPair{ShortURL: shortURL, LongURL: originalURL}
 	user := UserURL{UserID: userID, Links: []models.LinkPair{pair}}
 
-	encoder := json.NewEncoder(file)
+	encoder := json.NewEncoder(m.file)
 	return encoder.Encode(&user)
 }
 
