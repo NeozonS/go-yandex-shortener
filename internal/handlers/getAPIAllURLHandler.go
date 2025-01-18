@@ -17,7 +17,7 @@ func (u *Handlers) GetAPIAllURLHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusNoContent)
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(201)
+	w.WriteHeader(200)
 	json.NewEncoder(w).Encode(allURL)
 
 }
