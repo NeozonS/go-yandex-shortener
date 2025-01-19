@@ -12,8 +12,8 @@ type Storage struct {
 	file *os.File
 }
 type UserURL struct {
-	UserID string            `json:"user_id"`
-	Links  []models.LinkPair `json:"links"`
+	UserID string          `json:"user_id"`
+	Links  models.LinkPair `json:"links"`
 }
 
 func (m *Storage) GetURL(shortURL string) (string, error) {
@@ -25,17 +25,15 @@ func (m *Storage) GetURL(shortURL string) (string, error) {
 
 	decoder := json.NewDecoder(file)
 	for {
-		var users UserURL
-		if err := decoder.Decode(&users); err != nil {
+		var user UserURL
+		if err := decoder.Decode(&user); err != nil {
 			if err == io.EOF {
 				break
 			}
 			return "", err
 		}
-		for _, link := range users.Links {
-			if link.ShortURL == shortURL {
-				return link.LongURL, nil
-			}
+		if user.Links.ShortURL == shortURL {
+			return user.Links.LongURL, nil
 		}
 	}
 	return "", errors.New("url not found")
@@ -59,7 +57,7 @@ func (m *Storage) GetAllURL(userID string) ([]models.LinkPair, error) {
 			return nil, err
 		}
 		if pair.UserID == userID {
-			result = append(result, pair.Links...)
+			result = append(result, pair.Links)
 		}
 	}
 	if len(result) > 0 {
@@ -74,8 +72,7 @@ func (m *Storage) UpdateURL(userID, shortURL, originalURL string) error {
 		return err
 	}
 	defer file.Close()
-	pair := models.LinkPair{ShortURL: shortURL, LongURL: originalURL}
-	user := UserURL{UserID: userID, Links: []models.LinkPair{pair}}
+	user := UserURL{UserID: userID, Links: models.LinkPair{ShortURL: shortURL, LongURL: originalURL}}
 
 	encoder := json.NewEncoder(file)
 	return encoder.Encode(&user)
