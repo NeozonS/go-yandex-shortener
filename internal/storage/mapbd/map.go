@@ -39,6 +39,6 @@ func (m *MapBD) UpdateURL(userID, shortURL, originalURL string) error {
 	m.Urls[userID][shortURL] = originalURL
 	return nil
 }
-func New() *MapBD {
-	return &MapBD{Urls: make(map[string]map[string]string)}
+func New() (*MapBD, error) {
+	return &MapBD{Urls: make(map[string]map[string]string)}, nil
 }

@@ -78,12 +78,11 @@ func (m *Storage) UpdateURL(userID, shortURL, originalURL string) error {
 	return encoder.Encode(&user)
 }
 
-func NewFileStorage(filename string) *Storage {
-	//file, err := os.Create(filename)
+func NewFileStorage(filename string) (*Storage, error) {
 	file, err := os.OpenFile(filename, os.O_RDONLY|os.O_CREATE, 0666)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	defer file.Close()
-	return &Storage{file: file}
+	return &Storage{file: file}, nil
 }

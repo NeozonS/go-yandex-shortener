@@ -7,6 +7,7 @@ import (
 	"github.com/NeozonS/go-shortener-ya.git/internal/storage"
 	"github.com/NeozonS/go-shortener-ya.git/internal/storage/file"
 	"github.com/NeozonS/go-shortener-ya.git/internal/storage/mapbd"
+	"github.com/NeozonS/go-shortener-ya.git/internal/storage/postgres"
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"log"
@@ -14,9 +15,13 @@ import (
 )
 
 func main() {
+
 	config := server.NewConfig()
 
-	repositories := choiseStorage(config.FileStorage)
+	repositories, err := choiseStorage(config.FileStorage)
+	if err != nil {
+		log.Fatal(err)
+	}
 	handler := handlers.NewHandlers(repositories, config)
 
 	r := chi.NewRouter()
@@ -42,9 +47,13 @@ func main() {
 	http.ListenAndServe(config.ServAddr, r)
 }
 
-func choiseStorage(storage string) storage.Repository {
+func choiseStorage(storage string) (storage.Repository, error) {
 	if storage == "" {
 		return mapbd.New()
+	}
+	if storage == "POSTGRES" {
+		dsn := "postgres://postgres:123456l@localhost:5432/shortener_db?sslmode=disable"
+		return postgres.NewPostgresDB(dsn)
 	}
 	return file.NewFileStorage(storage)
 }
