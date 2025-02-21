@@ -70,10 +70,10 @@ func (p *PostgresDB) UpdateURL(userID, shortURL, originalURL string) error {
 func NewPostgresDB(dsn string) (*PostgresDB, error) {
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
-		return nil, fmt.Errorf("Error opening database connection: %s", err)
+		return nil, fmt.Errorf("error opening database connection: %s", err)
 	}
 	if err = db.Ping(); err != nil {
-		return nil, fmt.Errorf("Error pinging database connection: %s", err)
+		return nil, fmt.Errorf("error pinging database connection: %s", err)
 	}
 
 	return &PostgresDB{db: db}, nil
@@ -103,7 +103,7 @@ func (p *PostgresDB) CreateUser(userid string) error {
 	query := `INSERT INTO users (id) VALUES ($1) ON CONFLICT DO NOTHING;`
 	_, err := p.db.Exec(query, userid)
 	if err != nil {
-		return fmt.Errorf("Error creating user: %w", err)
+		return fmt.Errorf("error creating user: %w", err)
 	}
 	return nil
 }
