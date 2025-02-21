@@ -12,10 +12,16 @@ func (u *Handlers) GetAPIAllURLHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "userID not found", http.StatusUnauthorized)
 		return
 	}
+
 	allURL, err := u.repo.GetAllURL(userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNoContent)
 	}
+
+	for i, link := range allURL {
+		allURL[i].ShortURL = utils.FullURL(u.config.BaseURL, link.ShortURL)
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 	json.NewEncoder(w).Encode(allURL)
