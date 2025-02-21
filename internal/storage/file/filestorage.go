@@ -1,6 +1,7 @@
 package file
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"github.com/NeozonS/go-shortener-ya.git/internal/storage/models"
@@ -85,4 +86,8 @@ func NewFileStorage(filename string) (*Storage, error) {
 	}
 	defer file.Close()
 	return &Storage{file: file}, nil
+}
+
+func (m *Storage) Ping(ctx context.Context) error {
+	return nil
 }

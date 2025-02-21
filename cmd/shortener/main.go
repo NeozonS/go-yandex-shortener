@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"github.com/NeozonS/go-shortener-ya.git/internal/handlers"
 	"github.com/NeozonS/go-shortener-ya.git/internal/middleware"
 	"github.com/NeozonS/go-shortener-ya.git/internal/server"
@@ -18,14 +19,20 @@ func main() {
 
 	config := server.NewConfig()
 
-	repositories, err := choiseStorage(config.FileStorage)
+	repositories, err := choiseStorage(config)
 	if err != nil {
 		log.Fatal(err)
 	}
+	if pgStore, ok := repositories.(*postgres.PostgresDB); ok {
+		if err := pgStore.CreateTable(context.Background()); err != nil {
+			log.Fatalf("Failed to create tables: %v", err)
+		}
+	}
+
 	handler := handlers.NewHandlers(repositories, config)
 
 	r := chi.NewRouter()
-	r.Use(middleware.CookieMiddleware)
+	r.Use(middleware.AuthMiddleware)
 	r.Use(middleware.GzipRequestMiddleware)
 	r.Use(middleware.GzipResponseMiddleware)
 	r.Use(chiMiddleware.Logger)
@@ -38,7 +45,7 @@ func main() {
 
 	r.Post("/", handler.PostHandler)
 	r.Get("/{id}", handler.GetHandler)
-
+	r.Get("/ping", handler.PingHandler)
 	r.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 	})
@@ -47,13 +54,28 @@ func main() {
 	http.ListenAndServe(config.ServAddr, r)
 }
 
-func choiseStorage(storage string) (storage.Repository, error) {
-	if storage == "" {
-		return mapbd.New()
+func choiseStorage(storage server.Config) (storage.Repository, error) {
+	if storage.DatabaseDSN != "" {
+		store, err := postgres.NewPostgresDB(storage.DatabaseDSN)
+		if err != nil {
+			log.Fatalf("Failed to initialize PostgreSQL storage: %v", err)
+		}
+		log.Println("Using PostgreSQL storage")
+		return store, nil
+	} else if storage.FileStorage != "" {
+		store, err := file.NewFileStorage(storage.FileStorage)
+		if err != nil {
+			log.Fatalf("Failed to initialize file storage: %v", err)
+		}
+		log.Println("Using file storage")
+		return store, nil
+	} else {
+		store, _ := mapbd.New()
+		log.Println("Using mapbd storage")
+		return store, nil
 	}
-	if storage == "POSTGRES" {
-		dsn := "postgres://postgres:123456l@localhost:5432/shortener_db?sslmode=disable"
-		return postgres.NewPostgresDB(dsn)
-	}
-	return file.NewFileStorage(storage)
+	//if storage == "POSTGRES" {
+	//	dsn := "postgres://postgres:123456l@localhost:5432/shortener_db?sslmode=disable"
+	//	return postgres.NewPostgresDB(dsn)
+	//}
 }

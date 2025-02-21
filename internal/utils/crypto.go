@@ -4,9 +4,8 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
-	"math/rand"
-	"time"
 )
 
 var secretKey = []byte("temporary-secret-key-for-development")
@@ -55,14 +54,8 @@ func Decrypt(data string) (string, error) {
 	return string(plaintext), nil
 }
 
-func GenerateShortURL() string {
-	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	const length = 6
-	seed := rand.NewSource(time.Now().UnixNano())
-	randGen := rand.New(seed)
-	shortKey := make([]byte, length)
-	for i := range shortKey {
-		shortKey[i] = charset[randGen.Intn(len(charset))]
-	}
-	return string(shortKey)
+func GenerateShortURL(originalURL, userID string) string {
+	hash := sha256.Sum256([]byte(originalURL + userID))
+	token := base64.URLEncoding.EncodeToString(hash[:])
+	return token[:8]
 }

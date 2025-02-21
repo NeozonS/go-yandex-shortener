@@ -18,17 +18,17 @@ func (u *Handlers) PostAPI(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), 400)
 	}
-	shortURL := u.config.BaseURL + "/" + utils.GenerateShortURL()
 	userID, ok := utils.GetUserID(r.Context())
+	token := utils.GenerateShortURL(jsonurl.URL, userID)
 	if !ok || userID == "" {
 		http.Error(w, "userID not found", http.StatusUnauthorized)
 		return
 	}
-	err = u.repo.UpdateURL(userID, shortURL, jsonurl.URL)
+	err = u.repo.UpdateURL(userID, token, jsonurl.URL)
 	if err != nil {
 		http.Error(w, err.Error(), 400)
 	}
-	result := APIJson{Result: shortURL}
+	result := APIJson{Result: utils.FullURL(u.config.BaseURL, token)}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(201)
 	json.NewEncoder(w).Encode(result)

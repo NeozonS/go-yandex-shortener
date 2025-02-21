@@ -27,16 +27,18 @@ func (u *Handlers) PostHandler(w http.ResponseWriter, r *http.Request) {
 	if !strings.HasPrefix(string(b), "http://") && !strings.HasPrefix(string(b), "https://") {
 		originURL = "http://" + originURL
 	}
-	shortURL := u.config.BaseURL + "/" + utils.GenerateShortURL()
+
 	userID, ok := utils.GetUserID(r.Context())
+
+	token := utils.GenerateShortURL(originURL, userID)
 	if !ok || userID == "" {
 		http.Error(w, "userID not found", http.StatusUnauthorized)
 		return
 	}
-	err = u.repo.UpdateURL(userID, shortURL, originURL)
+	err = u.repo.UpdateURL(userID, token, originURL)
 	if err != nil {
 		http.Error(w, err.Error(), 400)
 	}
 	w.WriteHeader(201)
-	fmt.Fprint(w, shortURL)
+	fmt.Fprint(w, utils.FullURL(u.config.BaseURL, token))
 }

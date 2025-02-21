@@ -5,12 +5,12 @@ import (
 	"net/http"
 )
 
-type HandlersTest struct {
+type DB struct {
 	DB *postgres.PostgresDB
 }
 
-func (h *HandlersTest) PingHandler(w http.ResponseWriter, r *http.Request) {
-	err := h.DB.DB.Ping()
+func (u *Handlers) PingHandler(w http.ResponseWriter, r *http.Request) {
+	err := u.repo.Ping(r.Context())
 	if err != nil {
 		http.Error(w, "DB connection failed", http.StatusInternalServerError)
 		return

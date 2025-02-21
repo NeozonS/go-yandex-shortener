@@ -2,3 +2,8 @@
 {"user_id":"617c6e75-0d75-4f73-b1ab-a0385e454438","links":{"short_url":"http://localhost:8080/ROjlhW","original_url":"http://vk.com"}}
 {"user_id":"617c6e75-0d75-4f73-b1ab-a0385e454438","links":{"short_url":"http://localhost:8080/qOaU1S","original_url":"http://bodya.ua"}}
 {"user_id":"617c6e75-0d75-4f73-b1ab-a0385e454438","links":{"short_url":"http://localhost:8080/BMpK2P","original_url":"http://vk.com"}}
+{"user_id":"0ea0ca27-535c-4eff-93b8-85f2d6c44f10","links":{"short_url":"ysuWkWuv","original_url":"http://vk.com"}}
+{"user_id":"0ea0ca27-535c-4eff-93b8-85f2d6c44f10","links":{"short_url":"ysuWkWuv","original_url":"http://vk.com"}}
+{"user_id":"0ea0ca27-535c-4eff-93b8-85f2d6c44f10","links":{"short_url":"ysuWkWuv","original_url":"http://vk.com"}}
+{"user_id":"26dd4880-27e9-48fb-b6a8-5d2695df075e","links":{"short_url":"JY8DQCAq","original_url":"http://vk.com"}}
+{"user_id":"26dd4880-27e9-48fb-b6a8-5d2695df075e","links":{"short_url":"JY8DQCAq","original_url":"http://vk.com"}}

@@ -1,6 +1,7 @@
 package mapbd
 
 import (
+	"context"
 	"fmt"
 	"github.com/NeozonS/go-shortener-ya.git/internal/storage/models"
 )
@@ -41,4 +42,7 @@ func (m *MapBD) UpdateURL(userID, shortURL, originalURL string) error {
 }
 func New() (*MapBD, error) {
 	return &MapBD{Urls: make(map[string]map[string]string)}, nil
+}
+func (m *MapBD) Ping(ctx context.Context) error {
+	return nil
 }
