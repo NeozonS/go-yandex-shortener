@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"github.com/NeozonS/go-shortener-ya.git/internal/server"
 	"github.com/NeozonS/go-shortener-ya.git/internal/storage/models"
@@ -21,6 +22,7 @@ type MockRepo struct {
 	UpdateURLFunc func(userID, shortURL, originURL string) error
 	GetURLFunc    func(shortURL string) (string, error)
 	GetAllURLFunc func(userID string) ([]models.LinkPair, error)
+	PingFunc      func(ctx context.Context) error
 }
 
 // UpdateURL реализует метод UpdateURL из интерфейса storage.Repository.
@@ -45,6 +47,13 @@ func (m *MockRepo) GetAllURL(userID string) ([]models.LinkPair, error) {
 		return m.GetAllURLFunc(userID)
 	}
 	return []models.LinkPair{}, nil
+}
+
+func (m *MockRepo) Ping(ctx context.Context) error {
+	if m.PingFunc != nil {
+		return m.PingFunc(ctx)
+	}
+	return nil
 }
 
 func TestHandlers_PostHandler(t *testing.T) {
