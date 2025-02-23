@@ -74,8 +74,6 @@ func choiseStorage(storage server.Config) (storage.Repository, error) {
 		log.Println("Using mapbd storage")
 		return store, nil
 	}
-	//if storage == "POSTGRES" {
 	//	dsn := "postgres://postgres:123456l@localhost:5432/shortener_db?sslmode=disable"
-	//	return postgres.NewPostgresDB(dsn)
-	//}
+
 }
