@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func (u *Handlers) BatchHandler(w http.ResponseWriter, r *http.Request) {
+func (u *Handlers) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
 	var BRequest []BatchRequest
 	var BResponse []BatchResponse
 	b := json.NewDecoder(r.Body)

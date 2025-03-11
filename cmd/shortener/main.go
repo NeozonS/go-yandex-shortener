@@ -41,7 +41,7 @@ func main() {
 	r.Route("/api", func(r chi.Router) {
 		r.Post("/shorten", handler.PostAPI)
 		r.Get("/user/urls", handler.GetAPIAllURLHandler)
-		r.Get("/shorten/batch", handler.BatchHandler)
+		r.Post("/shorten/batch", handler.PostBatchHandler)
 	})
 
 	r.Post("/", handler.PostHandler)
