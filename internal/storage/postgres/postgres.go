@@ -12,28 +12,28 @@ type PostgresDB struct {
 	db *sql.DB
 }
 
-func (p *PostgresDB) GetURL(shortURL string) (string, error) {
+func (p *PostgresDB) GetURL(ctx context.Context, shortURL string) (string, error) {
 	query := `
 	SELECT original_url
 	FROM short_urls
 	WHERE token = $1`
 
 	var originalURL string
-	err := p.db.QueryRow(query, shortURL).Scan(&originalURL)
+	err := p.db.QueryRowContext(ctx, query, shortURL).Scan(&originalURL)
 	if err != nil {
 		return "", fmt.Errorf("failed to get URL: %w", err)
 	}
 	return originalURL, nil
 }
 
-func (p *PostgresDB) GetAllURL(userID string) ([]models.LinkPair, error) {
+func (p *PostgresDB) GetAllURL(ctx context.Context, userID string) ([]models.LinkPair, error) {
 	query := `
 	SELECT token, original_url
 	FROM short_urls
 	WHERE user_id = $1
 	ORDER BY created_at DESC
 `
-	rows, err := p.db.Query(query, userID)
+	rows, err := p.db.QueryContext(ctx, query, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all URLs: %w", err)
 	}
@@ -53,7 +53,7 @@ func (p *PostgresDB) GetAllURL(userID string) ([]models.LinkPair, error) {
 	return urls, nil
 }
 
-func (p *PostgresDB) UpdateURL(userID, shortURL, originalURL string) error {
+func (p *PostgresDB) UpdateURL(ctx context.Context, userID, shortURL, originalURL string) error {
 	if err := p.CreateUser(userID); err != nil {
 		return fmt.Errorf("failed to create user: %w", err)
 	}
@@ -63,8 +63,35 @@ func (p *PostgresDB) UpdateURL(userID, shortURL, originalURL string) error {
 	ON CONFLICT (token) DO UPDATE
 	SET original_url =EXCLUDED.original_url
 `
-	_, err := p.db.Exec(query, shortURL, originalURL, userID)
+	_, err := p.db.ExecContext(ctx, query, shortURL, originalURL, userID)
 	return err
+}
+func (p *PostgresDB) BatchUpdateURL(ctx context.Context, userID string, URLs map[string]string) error {
+	if err := p.CreateUser(userID); err != nil {
+		return fmt.Errorf("failed to create user: %w", err)
+	}
+	tx, err := p.db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+	stmt, err := tx.Prepare(`
+	INSERT INTO short_urls (token, original_url,userid)
+	VALUES ($1, $2, $3)
+	ON CONFLICT (token) DO UPDATE
+	SET original_url = EXCLUDED.original_url
+`)
+	if err != nil {
+		return fmt.Errorf("failed to prepare statement: %w", err)
+	}
+	defer stmt.Close()
+
+	for originalURL, shortURL := range URLs {
+		if _, err := stmt.ExecContext(ctx, shortURL, originalURL, userID); err != nil {
+			return fmt.Errorf("failed to insert URL: %w", err)
+		}
+	}
+	return tx.Commit()
 }
 
 func NewPostgresDB(dsn string) (*PostgresDB, error) {

@@ -9,6 +9,8 @@ import (
 func (u *Handlers) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
 	var BRequest []BatchRequest
 	var BResponse []BatchResponse
+	URLs := make(map[string]string)
+	ctx := r.Context()
 	b := json.NewDecoder(r.Body)
 	err := b.Decode(&BRequest)
 	if err != nil {
@@ -21,12 +23,10 @@ func (u *Handlers) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, s := range BRequest {
 		token := utils.GenerateShortURL(s.OriginalURL, userID)
-		err := u.repo.UpdateURL(userID, token, s.OriginalURL)
-		if err != nil {
-			http.Error(w, err.Error(), 400)
-		}
+		URLs[token] = s.OriginalURL
 		BResponse = append(BResponse, BatchResponse{CorrelationID: s.CorrelationID, ShortURL: utils.FullURL(u.config.BaseURL, token)})
 	}
+	u.repo.BatchUpdateURL(ctx, userID, URLs)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(201)
 	json.NewEncoder(w).Encode(BResponse)

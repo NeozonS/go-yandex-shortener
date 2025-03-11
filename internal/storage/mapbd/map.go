@@ -10,7 +10,7 @@ type MapBD struct {
 	Urls map[string]map[string]string
 }
 
-func (m *MapBD) GetURL(shortURL string) (string, error) {
+func (m *MapBD) GetURL(ctx context.Context, shortURL string) (string, error) {
 	for _, u := range m.Urls {
 		if originalURL, ok := u[shortURL]; ok {
 			return originalURL, nil
@@ -18,7 +18,7 @@ func (m *MapBD) GetURL(shortURL string) (string, error) {
 	}
 	return "", fmt.Errorf("short url not found for %s", shortURL)
 }
-func (m *MapBD) GetAllURL(userID string) ([]models.LinkPair, error) {
+func (m *MapBD) GetAllURL(ctx context.Context, userID string) ([]models.LinkPair, error) {
 	u, ok := m.Urls[userID]
 	if !ok {
 		return nil, fmt.Errorf("user not found for %s", userID)
@@ -33,11 +33,19 @@ func (m *MapBD) GetAllURL(userID string) ([]models.LinkPair, error) {
 	return userLink, nil
 }
 
-func (m *MapBD) UpdateURL(userID, shortURL, originalURL string) error {
+func (m *MapBD) UpdateURL(ctx context.Context, userID, shortURL, originalURL string) error {
 	if _, ok := m.Urls[userID]; !ok {
 		m.Urls[userID] = make(map[string]string)
 	}
 	m.Urls[userID][shortURL] = originalURL
+	return nil
+}
+
+func (m *MapBD) BatchUpdateURL(ctx context.Context, userID string, URLs map[string]string) error {
+	if _, ok := m.Urls[userID]; !ok {
+		m.Urls[userID] = URLs
+	}
+	m.Urls[userID] = URLs
 	return nil
 }
 func New() (*MapBD, error) {
