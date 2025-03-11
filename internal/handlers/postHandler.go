@@ -17,7 +17,6 @@ func (u *Handlers) PostHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
-
 	}
 	originURL := string(b)
 	if originURL == "" {
@@ -27,9 +26,7 @@ func (u *Handlers) PostHandler(w http.ResponseWriter, r *http.Request) {
 	if !strings.HasPrefix(string(b), "http://") && !strings.HasPrefix(string(b), "https://") {
 		originURL = "http://" + originURL
 	}
-
 	userID, ok := utils.GetUserID(r.Context())
-
 	token := utils.GenerateShortURL(originURL, userID)
 	if !ok || userID == "" {
 		http.Error(w, "userID not found", http.StatusUnauthorized)
