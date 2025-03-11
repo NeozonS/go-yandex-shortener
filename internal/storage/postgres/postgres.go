@@ -75,8 +75,8 @@ func (p *PostgresDB) BatchUpdateURL(ctx context.Context, userID string, URLs map
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback()
-	stmt, err := tx.Prepare(`
-	INSERT INTO short_urls (token, original_url,userid)
+	stmt, err := tx.PrepareContext(ctx, `
+	INSERT INTO short_urls (token, original_url,user_id)
 	VALUES ($1, $2, $3)
 	ON CONFLICT (token) DO UPDATE
 	SET original_url = EXCLUDED.original_url
