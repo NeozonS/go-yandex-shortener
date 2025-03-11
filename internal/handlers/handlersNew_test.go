@@ -14,41 +14,45 @@ import (
 	"testing"
 )
 
-func (u *Handlers) MockgenerateShortURL() string {
+func (u *Handlers) MockGenerateShortURL() string {
 	return "short123"
 }
 
 type MockRepo struct {
-	UpdateURLFunc func(ctx context.Context,userID, shortURL, originURL string) error
-	GetURLFunc    func(ctx context.Context,shortURL string) (string, error)
-	GetAllURLFunc func(ctx context.Context,userID string) ([]models.LinkPair, error)
-	PingFunc      func(ctx context.Context) error
+	UpdateURLFunc      func(ctx context.Context, userID, shortURL, originURL string) error
+	GetURLFunc         func(ctx context.Context, shortURL string) (string, error)
+	GetAllURLFunc      func(ctx context.Context, userID string) ([]models.LinkPair, error)
+	PingFunc           func(ctx context.Context) error
 	BatchUpdateURLFunc func(ctx context.Context, userID string, URLs map[string]string) error
 }
-func (m *MockRepo) BatchUpdateURL (ctx context.Context, userID string, URLs map[string]string) error{
-	if m.BatchUpdateURLFunc != nil { return m.BatchUpdateURLFunc((ctx, userID, URLs)) }
+
+func (m *MockRepo) BatchUpdateURL(ctx context.Context, userID string, URLs map[string]string) error {
+	if m.BatchUpdateURLFunc != nil {
+		return m.BatchUpdateURLFunc(ctx, userID, URLs)
+	}
 	return nil
 }
+
 // UpdateURL реализует метод UpdateURL из интерфейса storage.Repository.
-func (m *MockRepo) UpdateURL(ctx context.Context,userID, shortURL, originURL string) error {
+func (m *MockRepo) UpdateURL(ctx context.Context, userID, shortURL, originURL string) error {
 	if m.UpdateURLFunc != nil {
-		return m.UpdateURLFunc(ctx,userID, shortURL, originURL)
+		return m.UpdateURLFunc(ctx, userID, shortURL, originURL)
 	}
 	return nil
 }
 
 // GetURL реализует метод GetURL из интерфейса storage.Repository.
-func (m *MockRepo) GetURL(ctx context.Context,shortURL string) (string, error) {
+func (m *MockRepo) GetURL(ctx context.Context, shortURL string) (string, error) {
 	if m.GetURLFunc != nil {
-		return m.GetURLFunc(ctx,shortURL)
+		return m.GetURLFunc(ctx, shortURL)
 	}
 	return "", nil
 }
 
 // GetAllURL реализует метод GetAllURL из интерфейса storage.Repository.
-func (m *MockRepo) GetAllURL(ctx context.Context,userID string) ([]models.LinkPair, error) {
+func (m *MockRepo) GetAllURL(ctx context.Context, userID string) ([]models.LinkPair, error) {
 	if m.GetAllURLFunc != nil {
-		return m.GetAllURLFunc(ctx,userID)
+		return m.GetAllURLFunc(ctx, userID)
 	}
 	return []models.LinkPair{}, nil
 }
@@ -108,9 +112,9 @@ func TestHandlers_PostHandler(t *testing.T) {
 			reqPost = reqPost.WithContext(ctx)
 			mockRepo := &MockRepo{}
 			config := server.Config{}
-			handl := NewHandlers(mockRepo, config)
+			handler := NewHandlers(mockRepo, config)
 			rr := httptest.NewRecorder()
-			h := http.HandlerFunc(handl.PostHandler)
+			h := http.HandlerFunc(handler.PostHandler)
 			h.ServeHTTP(rr, reqPost)
 			assert.Equal(t, tt.wants.statusCode, rr.Code)
 		})
@@ -128,13 +132,13 @@ func TestHandlers_GetHandler(t *testing.T) {
 	tests := []struct {
 		name       string
 		id         string
-		mockGetURL func(shortURL string) (string, error)
+		mockGetURL func(ctx context.Context, shortURL string) (string, error)
 		wants      want
 	}{
 		{
 			name: "getTest - успешный запрос с http",
 			id:   "abc123",
-			mockGetURL: func(shortURL string) (string, error) {
+			mockGetURL: func(ctx context.Context, shortURL string) (string, error) {
 				return "http://vk.com", nil
 			},
 			wants: want{
@@ -146,7 +150,7 @@ func TestHandlers_GetHandler(t *testing.T) {
 		{
 			name: "getTest2 - успешный запрос без схемы",
 			id:   "abc123",
-			mockGetURL: func(shortURL string) (string, error) {
+			mockGetURL: func(ctx context.Context, shortURL string) (string, error) {
 				return "vk.com", nil
 			},
 			wants: want{
@@ -158,7 +162,7 @@ func TestHandlers_GetHandler(t *testing.T) {
 		{
 			name: "getTest3 - ошибка: URL не найден",
 			id:   "abc123",
-			mockGetURL: func(shortURL string) (string, error) {
+			mockGetURL: func(ctx context.Context, shortURL string) (string, error) {
 				return "", errors.New("URL not found")
 			},
 			wants: want{
@@ -180,7 +184,7 @@ func TestHandlers_GetHandler(t *testing.T) {
 			config := server.Config{}
 
 			// Создаем обработчик
-			handl := NewHandlers(mockRepo, config)
+			handler := NewHandlers(mockRepo, config)
 
 			// Создаем запрос
 			reqGet := httptest.NewRequest(http.MethodGet, "http://localhost:8080/"+tt.id, nil)
@@ -194,7 +198,7 @@ func TestHandlers_GetHandler(t *testing.T) {
 
 			// Используем chi для маршрутизации
 			r := chi.NewRouter()
-			r.Get("/{id}", handl.GetHandler)
+			r.Get("/{id}", handler.GetHandler)
 			r.ServeHTTP(rr, reqGet)
 
 			// Проверяем статус код
@@ -260,9 +264,9 @@ func TestHandlers_PostAPI(t *testing.T) {
 			reqPost = reqPost.WithContext(ctx)
 			repo := &MockRepo{}
 			config := server.Config{}
-			handl := NewHandlers(repo, config)
+			handle := NewHandlers(repo, config)
 			rr := httptest.NewRecorder()
-			h := http.HandlerFunc(handl.PostAPI)
+			h := http.HandlerFunc(handle.PostAPI)
 			h.ServeHTTP(rr, reqPost)
 			assert.Equal(t, tt.wants.statusCode, rr.Code)
 		})
