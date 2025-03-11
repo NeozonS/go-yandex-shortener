@@ -16,7 +16,7 @@ func (u *Handlers) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	userID, ok := utils.GetUserID(r.Context())
 	if !ok || userID == "" {
-		http.Error(w, "userID not found", 401)
+		http.Error(w, "userID not found", http.StatusUnauthorized)
 		return
 	}
 	for _, s := range BRequest {
@@ -25,7 +25,7 @@ func (u *Handlers) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			http.Error(w, err.Error(), 400)
 		}
-		BResponse = append(BResponse, BatchResponse{CorrelationId: s.CorrelationId, ShortURL: utils.FullURL(u.config.BaseURL, token)})
+		BResponse = append(BResponse, BatchResponse{CorrelationID: s.CorrelationID, ShortURL: utils.FullURL(u.config.BaseURL, token)})
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(201)
