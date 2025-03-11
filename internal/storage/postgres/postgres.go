@@ -86,7 +86,7 @@ func (p *PostgresDB) BatchUpdateURL(ctx context.Context, userID string, URLs map
 	}
 	defer stmt.Close()
 
-	for originalURL, shortURL := range URLs {
+	for shortURL, originalURL := range URLs {
 		if _, err := stmt.ExecContext(ctx, shortURL, originalURL, userID); err != nil {
 			return fmt.Errorf("failed to insert URL: %w", err)
 		}
