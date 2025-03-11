@@ -19,32 +19,36 @@ func (u *Handlers) MockgenerateShortURL() string {
 }
 
 type MockRepo struct {
-	UpdateURLFunc func(userID, shortURL, originURL string) error
-	GetURLFunc    func(shortURL string) (string, error)
-	GetAllURLFunc func(userID string) ([]models.LinkPair, error)
+	UpdateURLFunc func(ctx context.Context,userID, shortURL, originURL string) error
+	GetURLFunc    func(ctx context.Context,shortURL string) (string, error)
+	GetAllURLFunc func(ctx context.Context,userID string) ([]models.LinkPair, error)
 	PingFunc      func(ctx context.Context) error
+	BatchUpdateURLFunc func(ctx context.Context, userID string, URLs map[string]string) error
 }
-
+func (m *MockRepo) BatchUpdateURL (ctx context.Context, userID string, URLs map[string]string) error{
+	if m.BatchUpdateURLFunc != nil { return m.BatchUpdateURLFunc((ctx, userID, URLs)) }
+	return nil
+}
 // UpdateURL реализует метод UpdateURL из интерфейса storage.Repository.
-func (m *MockRepo) UpdateURL(userID, shortURL, originURL string) error {
+func (m *MockRepo) UpdateURL(ctx context.Context,userID, shortURL, originURL string) error {
 	if m.UpdateURLFunc != nil {
-		return m.UpdateURLFunc(userID, shortURL, originURL)
+		return m.UpdateURLFunc(ctx,userID, shortURL, originURL)
 	}
 	return nil
 }
 
 // GetURL реализует метод GetURL из интерфейса storage.Repository.
-func (m *MockRepo) GetURL(shortURL string) (string, error) {
+func (m *MockRepo) GetURL(ctx context.Context,shortURL string) (string, error) {
 	if m.GetURLFunc != nil {
-		return m.GetURLFunc(shortURL)
+		return m.GetURLFunc(ctx,shortURL)
 	}
 	return "", nil
 }
 
 // GetAllURL реализует метод GetAllURL из интерфейса storage.Repository.
-func (m *MockRepo) GetAllURL(userID string) ([]models.LinkPair, error) {
+func (m *MockRepo) GetAllURL(ctx context.Context,userID string) ([]models.LinkPair, error) {
 	if m.GetAllURLFunc != nil {
-		return m.GetAllURLFunc(userID)
+		return m.GetAllURLFunc(ctx,userID)
 	}
 	return []models.LinkPair{}, nil
 }
