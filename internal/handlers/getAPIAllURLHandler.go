@@ -13,7 +13,7 @@ func (u *Handlers) GetAPIAllURLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	allURL, err := u.repo.GetAllURL(userID)
+	allURL, err := u.repo.GetAllURL(r.Context(), userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNoContent)
 	}

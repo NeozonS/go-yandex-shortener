@@ -32,7 +32,7 @@ func (u *Handlers) PostHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "userID not found", http.StatusUnauthorized)
 		return
 	}
-	err = u.repo.UpdateURL(userID, token, originURL)
+	err = u.repo.UpdateURL(r.Context(), userID, token, originURL)
 	if err != nil {
 		http.Error(w, err.Error(), 400)
 	}

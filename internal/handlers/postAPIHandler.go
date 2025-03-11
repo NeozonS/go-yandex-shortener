@@ -24,7 +24,7 @@ func (u *Handlers) PostAPI(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "userID not found", http.StatusUnauthorized)
 		return
 	}
-	err = u.repo.UpdateURL(userID, token, jsonurl.URL)
+	err = u.repo.UpdateURL(r.Context(), userID, token, jsonurl.URL)
 	if err != nil {
 		http.Error(w, err.Error(), 400)
 	}

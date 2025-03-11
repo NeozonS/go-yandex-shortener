@@ -8,7 +8,7 @@ import (
 
 func (u *Handlers) GetHandler(w http.ResponseWriter, r *http.Request) {
 	urlP := chi.URLParam(r, "id")
-	originalURL, err := u.repo.GetURL(urlP)
+	originalURL, err := u.repo.GetURL(r.Context(), urlP)
 	if err != nil || urlP == "" {
 		http.Error(w, "Запрашиваемая страница не найдена", 400)
 		return
