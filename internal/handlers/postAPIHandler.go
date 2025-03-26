@@ -34,9 +34,9 @@ func (u *Handlers) PostAPI(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(APIJson{Result: utils.FullURL(u.config.BaseURL, conflictErr.ExistingURL)})
 			return
 		}
-		w.WriteHeader(201)
-		w.Header().Set("Content-Type", "application/json")
-		result := APIJson{Result: utils.FullURL(u.config.BaseURL, token)}
-		json.NewEncoder(w).Encode(result)
 	}
+	w.WriteHeader(201)
+	w.Header().Set("Content-Type", "application/json")
+	result := APIJson{Result: utils.FullURL(u.config.BaseURL, token)}
+	json.NewEncoder(w).Encode(result)
 }
