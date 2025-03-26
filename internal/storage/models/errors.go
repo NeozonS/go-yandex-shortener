@@ -1,7 +1,7 @@
 package models
 
 type ErrURLConflict struct {
-	ExistingToken string
+	ExistingURL string
 }
 
 func (e ErrURLConflict) Error() string {
