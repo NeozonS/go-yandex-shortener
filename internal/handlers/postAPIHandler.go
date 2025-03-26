@@ -27,17 +27,15 @@ func (u *Handlers) PostAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = u.repo.UpdateURL(r.Context(), userID, token, jsonurl.URL)
-	result := APIJson{}
-	switch {
-	case errors.Is(err, models.ErrURLConflict):
-		w.WriteHeader(409)
-
-	case err != nil:
-		http.Error(w, err.Error(), 400)
-	default:
-		w.WriteHeader(201)
+	var conflictErr models.ErrURLConflict
+	if err != nil {
+		if errors.As(err, &conflictErr) {
+			w.WriteHeader(409)
+			json.NewEncoder(w).Encode(APIJson{Result: utils.FullURL(u.config.BaseURL, conflictErr.ExistingURL)})
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		result := APIJson{Result: utils.FullURL(u.config.BaseURL, token)}
+		json.NewEncoder(w).Encode(result)
 	}
-	w.Header().Set("Content-Type", "application/json")
-	result = APIJson{Result: utils.FullURL(u.config.BaseURL, token)}
-	json.NewEncoder(w).Encode(result)
 }

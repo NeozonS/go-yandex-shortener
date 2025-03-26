@@ -63,18 +63,17 @@ func (p *PostgresDB) UpdateURL(ctx context.Context, userID, shortURL, originalUR
 	query := `
 	INSERT INTO short_urls (token, original_url, user_id)
 	VALUES ($1, $2, $3)
-	ON CONFLICT (token) DO NOTHING 
+	ON CONFLICT (original_url) DO UPDATE 
+	SET original_url = EXCLUDED.original_url
 	RETURNING token
 `
-
-	_, err := p.db.ExecContext(ctx, query, shortURL, originalURL, userID)
+	var existingToken string
+	err := p.db.QueryRowContext(ctx, query, shortURL, originalURL, userID).Scan(&existingToken)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			if pgErr.Code == pgerrcode.UniqueViolation {
-				return models.ErrURLConflict
-			}
-		}
+		return fmt.Errorf("failed to update URL: %w", err)
+	}
+	if existingToken != shortURL {
+		return models.ErrURLConflict{ExistingURL: existingToken}
 	}
 	return err
 }
@@ -103,7 +102,7 @@ func (p *PostgresDB) BatchUpdateURL(ctx context.Context, userID string, URLs map
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) {
 				if pgErr.Code == pgerrcode.UniqueViolation {
-					return models.ErrURLConflict
+					return models.ErrURLConflict{ExistingURL: originalURL}
 				}
 			}
 			return fmt.Errorf("failed to insert URL: %w", err)

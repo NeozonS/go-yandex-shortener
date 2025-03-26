@@ -34,14 +34,16 @@ func (u *Handlers) PostHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "userID not found", http.StatusUnauthorized)
 		return
 	}
+	var conflictErr models.ErrURLConflict
 	err = u.repo.UpdateURL(r.Context(), userID, token, originURL)
-	switch {
-	case errors.Is(err, models.ErrURLConflict):
-		w.WriteHeader(http.StatusConflict)
-	case err != nil:
+	if err != nil {
+		if errors.Is(err, &conflictErr) {
+			w.WriteHeader(http.StatusConflict)
+			fmt.Fprint(w, utils.FullURL(u.config.BaseURL, conflictErr.ExistingURL))
+			return
+		}
 		http.Error(w, err.Error(), 400)
-	default:
-		w.WriteHeader(201)
 	}
+	w.WriteHeader(201)
 	fmt.Fprint(w, utils.FullURL(u.config.BaseURL, token))
 }

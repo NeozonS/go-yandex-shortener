@@ -1,5 +1,9 @@
 package models
 
-import "errors"
+type ErrURLConflict struct {
+	ExistingURL string
+}
 
-var ErrURLConflict = errors.New("URL Already exists")
+func (e ErrURLConflict) Error() string {
+	return "URL already exists"
+}
