@@ -6,12 +6,10 @@ CREATE TABLE users (
 );
 
 CREATE TABLE short_urls (
-                            token CHAR(8) PRIMARY KEY,
-                            original_url TEXT NOT NULL,
-                            user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-                            clicks BIGINT DEFAULT 0,
-                            created_at TIMESTAMPTZ DEFAULT NOW(),
-                            expires_at TIMESTAMPTZ
+                                         token CHAR(8) PRIMARY KEY,
+                                         original_url TEXT NOT NULL UNIQUE,
+                                         user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+                                         clicks BIGINT DEFAULT 0,
+                                         created_at TIMESTAMPTZ DEFAULT NOW(),
+                                         expires_at TIMESTAMPTZ
 );
-
-CREATE INDEX idx_user_created ON short_urls (user_id, created_at);

@@ -27,7 +27,7 @@ func (u *Handlers) PostAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = u.repo.UpdateURL(r.Context(), userID, token, jsonurl.URL)
-	var conflictErr models.ErrURLConflict
+	var conflictErr *models.ErrURLConflict
 	if err != nil {
 		if errors.As(err, &conflictErr) {
 			w.WriteHeader(409)
