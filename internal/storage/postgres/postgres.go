@@ -3,8 +3,11 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/NeozonS/go-shortener-ya.git/internal/storage/models"
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -60,10 +63,19 @@ func (p *PostgresDB) UpdateURL(ctx context.Context, userID, shortURL, originalUR
 	query := `
 	INSERT INTO short_urls (token, original_url, user_id)
 	VALUES ($1, $2, $3)
-	ON CONFLICT (token) DO UPDATE
-	SET original_url =EXCLUDED.original_url
+	ON CONFLICT (token) DO NOTHING 
+	RETURNING token
 `
+
 	_, err := p.db.ExecContext(ctx, query, shortURL, originalURL, userID)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == pgerrcode.UniqueViolation {
+				return models.ErrURLConflict
+			}
+		}
+	}
 	return err
 }
 func (p *PostgresDB) BatchUpdateURL(ctx context.Context, userID string, URLs map[string]string) error {
@@ -88,6 +100,12 @@ func (p *PostgresDB) BatchUpdateURL(ctx context.Context, userID string, URLs map
 
 	for shortURL, originalURL := range URLs {
 		if _, err := stmt.ExecContext(ctx, shortURL, originalURL, userID); err != nil {
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) {
+				if pgErr.Code == pgerrcode.UniqueViolation {
+					return models.ErrURLConflict
+				}
+			}
 			return fmt.Errorf("failed to insert URL: %w", err)
 		}
 	}
@@ -114,14 +132,12 @@ func (p *PostgresDB) CreateTable(ctx context.Context) error {
     );
 	CREATE TABLE IF NOT EXISTS short_urls(
 	    token CHAR(8) PRIMARY KEY,
-	    original_url TEXT NOT NULL,
+	    original_url TEXT NOT NULL UNIQUE,
 	    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
 	    clicks BIGINT DEFAULT 0,
 	    created_at TIMESTAMPTZ DEFAULT NOW(),
 	    expires_at TIMESTAMPTZ
 	);
-	
-	CREATE INDEX IF NOT EXISTS idx_user_created ON short_urls (user_id, created_at);
 `
 	_, err := p.db.ExecContext(ctx, query)
 	return err

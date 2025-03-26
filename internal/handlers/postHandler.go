@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
+	"github.com/NeozonS/go-shortener-ya.git/internal/storage/models"
 	"github.com/NeozonS/go-shortener-ya.git/internal/utils"
 	"io"
 	"net/http"
@@ -33,9 +35,13 @@ func (u *Handlers) PostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = u.repo.UpdateURL(r.Context(), userID, token, originURL)
-	if err != nil {
+	switch {
+	case errors.Is(err, models.ErrURLConflict):
+		w.WriteHeader(http.StatusConflict)
+	case err != nil:
 		http.Error(w, err.Error(), 400)
+	default:
+		w.WriteHeader(201)
 	}
-	w.WriteHeader(201)
 	fmt.Fprint(w, utils.FullURL(u.config.BaseURL, token))
 }

@@ -18,6 +18,7 @@ func (m *MapBD) GetURL(ctx context.Context, shortURL string) (string, error) {
 	}
 	return "", fmt.Errorf("short url not found for %s", shortURL)
 }
+
 func (m *MapBD) GetAllURL(ctx context.Context, userID string) ([]models.LinkPair, error) {
 	u, ok := m.Urls[userID]
 	if !ok {

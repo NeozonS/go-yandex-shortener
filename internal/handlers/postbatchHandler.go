@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
+	"github.com/NeozonS/go-shortener-ya.git/internal/storage/models"
 	"github.com/NeozonS/go-shortener-ya.git/internal/utils"
 	"net/http"
 )
@@ -26,8 +28,15 @@ func (u *Handlers) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
 		URLs[token] = s.OriginalURL
 		BResponse = append(BResponse, BatchResponse{CorrelationID: s.CorrelationID, ShortURL: utils.FullURL(u.config.BaseURL, token)})
 	}
-	u.repo.BatchUpdateURL(ctx, userID, URLs)
+	err = u.repo.BatchUpdateURL(ctx, userID, URLs)
+	switch {
+	case errors.Is(err, models.ErrURLConflict):
+		w.WriteHeader(http.StatusConflict)
+	case err != nil:
+		http.Error(w, err.Error(), 400)
+	default:
+		w.WriteHeader(201)
+	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(201)
 	json.NewEncoder(w).Encode(BResponse)
 }

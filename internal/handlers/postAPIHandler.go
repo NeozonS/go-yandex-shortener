@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
+	"github.com/NeozonS/go-shortener-ya.git/internal/storage/models"
 	"github.com/NeozonS/go-shortener-ya.git/internal/utils"
 	"net/http"
 	"strings"
@@ -25,11 +27,17 @@ func (u *Handlers) PostAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = u.repo.UpdateURL(r.Context(), userID, token, jsonurl.URL)
-	if err != nil {
+	result := APIJson{}
+	switch {
+	case errors.Is(err, models.ErrURLConflict):
+		w.WriteHeader(409)
+
+	case err != nil:
 		http.Error(w, err.Error(), 400)
+	default:
+		w.WriteHeader(201)
 	}
-	result := APIJson{Result: utils.FullURL(u.config.BaseURL, token)}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(201)
+	result = APIJson{Result: utils.FullURL(u.config.BaseURL, token)}
 	json.NewEncoder(w).Encode(result)
 }
