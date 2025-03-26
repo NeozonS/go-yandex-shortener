@@ -5,6 +5,10 @@ type ErrURLConflict struct {
 	Err         error
 }
 
+func (e *ErrURLConflict) Unwrap() error {
+	return e.Err
+}
+
 func (e *ErrURLConflict) Error() string {
 	return "URL already exists"
 }
