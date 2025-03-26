@@ -27,6 +27,7 @@ func (u *Handlers) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
 		BResponse = append(BResponse, BatchResponse{CorrelationID: s.CorrelationID, ShortURL: utils.FullURL(u.config.BaseURL, token)})
 	}
 	u.repo.BatchUpdateURL(ctx, userID, URLs)
+	w.WriteHeader(201)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(BResponse)
 }
