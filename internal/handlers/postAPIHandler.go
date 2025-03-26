@@ -35,8 +35,8 @@ func (u *Handlers) PostAPI(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	w.WriteHeader(201)
-	w.Header().Set("Content-Type", "application/json")
 	result := APIJson{Result: utils.FullURL(u.config.BaseURL, token)}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
 	json.NewEncoder(w).Encode(result)
 }
