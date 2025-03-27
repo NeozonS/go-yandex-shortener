@@ -33,6 +33,7 @@ func (u *Handlers) PostAPI(w http.ResponseWriter, r *http.Request) {
 	var conflictErr *models.ErrURLConflict
 	if err != nil {
 		if errors.As(err, &conflictErr) {
+			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(409)
 			json.NewEncoder(w).Encode(APIJson{Result: utils.FullURL(u.config.BaseURL, conflictErr.ExistingURL)})
 			return
