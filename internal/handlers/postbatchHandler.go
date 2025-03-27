@@ -22,7 +22,10 @@ func (u *Handlers) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for _, s := range BRequest {
-		token := utils.GenerateShortURL(s.OriginalURL, userID)
+		token, err := utils.GenerateShortURL(s.OriginalURL, userID)
+		if err != nil {
+			http.Error(w, err.Error(), 400)
+		}
 		URLs[token] = s.OriginalURL
 		BResponse = append(BResponse, BatchResponse{CorrelationID: s.CorrelationID, ShortURL: utils.FullURL(u.config.BaseURL, token)})
 	}

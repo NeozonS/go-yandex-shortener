@@ -3,9 +3,11 @@ package utils
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 )
 
 var secretKey = []byte("temporary-secret-key-for-development")
@@ -54,8 +56,13 @@ func Decrypt(data string) (string, error) {
 	return string(plaintext), nil
 }
 
-func GenerateShortURL(originalURL, userID string) string {
-	hash := sha256.Sum256([]byte(originalURL + userID))
+func GenerateShortURL(originalURL, userID string) (string, error) {
+	randomBytes := make([]byte, 4)
+	if _, err := rand.Read(randomBytes); err != nil {
+		return "", fmt.Errorf("failed to generate random bytes, %w", err)
+	}
+	data := fmt.Sprintf("%s%s%x", originalURL, userID, randomBytes)
+	hash := sha256.Sum256([]byte(data))
 	token := base64.URLEncoding.EncodeToString(hash[:])
-	return token[:8]
+	return token[:8], nil
 }

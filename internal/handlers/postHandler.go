@@ -29,7 +29,10 @@ func (u *Handlers) PostHandler(w http.ResponseWriter, r *http.Request) {
 		originURL = "http://" + originURL
 	}
 	userID, ok := utils.GetUserID(r.Context())
-	token := utils.GenerateShortURL(originURL, userID)
+	token, err := utils.GenerateShortURL(originURL, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
 	if !ok || userID == "" {
 		http.Error(w, "userID not found", http.StatusUnauthorized)
 		return

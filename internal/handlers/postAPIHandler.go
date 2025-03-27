@@ -21,7 +21,10 @@ func (u *Handlers) PostAPI(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 400)
 	}
 	userID, ok := utils.GetUserID(r.Context())
-	token := utils.GenerateShortURL(jsonurl.URL, userID)
+	token, err := utils.GenerateShortURL(jsonurl.URL, userID)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+	}
 	if !ok || userID == "" {
 		http.Error(w, "userID not found", http.StatusUnauthorized)
 		return
