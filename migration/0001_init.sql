@@ -10,6 +10,7 @@ CREATE TABLE short_urls (
                                          original_url TEXT NOT NULL UNIQUE,
                                          user_id UUID REFERENCES users(id) ON DELETE CASCADE,
                                          clicks BIGINT DEFAULT 0,
+                                         is_delete BOOLEAN,
                                          created_at TIMESTAMPTZ DEFAULT NOW(),
                                          expires_at TIMESTAMPTZ
 );

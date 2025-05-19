@@ -5,14 +5,37 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/NeozonS/go-shortener-ya.git/internal/storage"
 	"github.com/NeozonS/go-shortener-ya.git/internal/storage/models"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
+type DeletableRepository interface {
+	storage.Repository
+	GetURLWithDeleted(ctx context.Context, shortURL string) (string, bool, error)
+}
+
 type PostgresDB struct {
 	db *sql.DB
+}
+
+func (p *PostgresDB) GetURLWithDeleted(ctx context.Context, shortURL string) (string, bool, error) {
+	query := `
+	SELECT original_url, is_deleted
+	FROM short_urls
+	WHERE token = $1`
+
+	var isDeleted bool
+	var originalURL string
+
+	err := p.db.QueryRowContext(ctx, query, shortURL).Scan(&originalURL, &isDeleted)
+	if err != nil {
+		return "", false, fmt.Errorf("failed to get URL: %w", err)
+	}
+
+	return originalURL, isDeleted, nil
 }
 
 func (p *PostgresDB) GetURL(ctx context.Context, shortURL string) (string, error) {
@@ -110,7 +133,42 @@ func (p *PostgresDB) BatchUpdateURL(ctx context.Context, userID string, URLs map
 	}
 	return tx.Commit()
 }
+func (p *PostgresDB) BatchDeleteURL(ctx context.Context, userID string, URL []string) error {
+	if len(URL) == 0 {
+		return fmt.Errorf("no URL provided")
+	}
+	tx, err := p.db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+	stmt, err := tx.PrepareContext(ctx, `
+	UPDATE short_urls
+	SET is_deleted = TRUE
+	WHERE 
+	    user_id = $1 AND
+	    token = $2
+`)
+	if err != nil {
+		return fmt.Errorf("failed to prepare statement: %w", err)
+	}
+	defer stmt.Close()
 
+	for _, token := range URL {
+		result, err := stmt.ExecContext(ctx, userID, token)
+		if err != nil {
+			return fmt.Errorf("failed to delete URL: %w", err)
+		}
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("failed to get rows affected: %w", err)
+		}
+		if rowsAffected == 0 {
+			return fmt.Errorf("no URLS were deleted: check if user valid")
+		}
+	}
+	return tx.Commit()
+}
 func NewPostgresDB(dsn string) (*PostgresDB, error) {
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
@@ -134,6 +192,7 @@ func (p *PostgresDB) CreateTable(ctx context.Context) error {
 	    original_url TEXT NOT NULL UNIQUE,
 	    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
 	    clicks BIGINT DEFAULT 0,
+	    is_deleted BOOLEAN DEFAULT FALSE,
 	    created_at TIMESTAMPTZ DEFAULT NOW(),
 	    expires_at TIMESTAMPTZ
 	);

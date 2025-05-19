@@ -19,6 +19,8 @@ func main() {
 
 	config := server.NewConfig()
 
+	ctx := context.Background()
+
 	repositories, err := choiseStorage(config)
 	if err != nil {
 		log.Fatal(err)
@@ -27,6 +29,7 @@ func main() {
 		if err := pgStore.CreateTable(context.Background()); err != nil {
 			log.Fatalf("Failed to create tables: %v", err)
 		}
+		pgStore.InitDeleteWorker(ctx)
 	}
 
 	handler := handlers.NewHandlers(repositories, config)
@@ -42,6 +45,7 @@ func main() {
 		r.Post("/shorten", handler.PostAPI)
 		r.Get("/user/urls", handler.GetAPIAllURLHandler)
 		r.Post("/shorten/batch", handler.PostBatchHandler)
+		r.Delete("/user/urls", handler.DeleteAPIUserURLsHandler)
 	})
 
 	r.Post("/", handler.PostHandler)
@@ -52,7 +56,10 @@ func main() {
 	})
 
 	log.Println("Server started at " + config.ServAddr)
-	http.ListenAndServe(config.ServAddr, r)
+	if err := http.ListenAndServe(config.ServAddr, r); err != nil {
+		log.Fatalf("Server failed to start: %v", err)
+	}
+
 }
 
 func choiseStorage(storage server.Config) (storage.Repository, error) {
