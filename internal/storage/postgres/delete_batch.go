@@ -14,7 +14,7 @@ type deleteTask struct {
 var deleteQueue = make(chan deleteTask, 1000)
 
 const batchSize = 100
-const batchTimeout = 2 * time.Second
+const batchTimeout = 0
 
 func (p *PostgresDB) InitDeleteWorker(ctx context.Context) {
 	log.Println("Worker WORKED  by context")
