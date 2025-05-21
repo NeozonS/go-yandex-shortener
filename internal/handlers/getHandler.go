@@ -24,6 +24,7 @@ func (u *Handlers) GetHandler(w http.ResponseWriter, r *http.Request) {
 		originalURL, isDeleted, err = dr.GetURLWithDeleted(r.Context(), token)
 	} else {
 		originalURL, err = u.repo.GetURL(r.Context(), token)
+		isDeleted = false
 	}
 	switch {
 	case errors.Is(err, sql.ErrNoRows):

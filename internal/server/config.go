@@ -25,10 +25,10 @@ func NewConfig() Config {
 
 	flag.Parse()
 	if config.ServAddr == "" {
-		config.ServAddr = "localhost:8080"
+		config.ServAddr = "localhost:18080"
 	}
 	if config.BaseURL == "" {
-		config.BaseURL = "http://localhost:8080"
+		config.BaseURL = "http://localhost:18080"
 	}
 	return config
 }
