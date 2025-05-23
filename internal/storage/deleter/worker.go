@@ -33,7 +33,7 @@ func (w *Worker) InitDeleteWorker(ctx context.Context) {
 	go w.batchDeleteWorker(ctx)
 }
 
-func (w *Worker) EnqueueURLForDeleteion(userID, token string) {
+func (w *Worker) EnqueueURLForDeletion(userID, token string) {
 	log.Printf("Enqueuing deletion: user=%s, token=%s", userID, token)
 	w.deleteQueue <- deleteTask{userID, token}
 }

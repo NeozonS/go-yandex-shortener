@@ -14,12 +14,13 @@ func (u *Handlers) DeleteAPIUserURLsHandler(w http.ResponseWriter, r *http.Reque
 	}
 	var ids []string
 	err := json.NewDecoder(r.Body).Decode(&ids)
+	defer r.Body.Close()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	for _, id := range ids {
-		u.worker.EnqueueURLForDeleteion(userID, id)
+		u.worker.EnqueueURLForDeletion(userID, id)
 	}
 	w.WriteHeader(http.StatusAccepted)
 

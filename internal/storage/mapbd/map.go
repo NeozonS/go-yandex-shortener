@@ -32,6 +32,8 @@ func (m *MapBD) GetURL(ctx context.Context, shortURL string) (string, bool, erro
 }
 
 func (m *MapBD) GetAllURL(ctx context.Context, userID string) ([]models.LinkPair, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	u, ok := m.Urls[userID]
 	if !ok {
 		return nil, fmt.Errorf("user not found for %s", userID)
@@ -59,6 +61,8 @@ func (m *MapBD) UpdateURL(ctx context.Context, userID, shortURL, originalURL str
 }
 
 func (m *MapBD) BatchUpdateURL(ctx context.Context, userID string, URLs map[string]string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	for shortURL, originalURL := range URLs {
 		m.Urls[userID][shortURL] = URLData{
 			URL:     originalURL,
