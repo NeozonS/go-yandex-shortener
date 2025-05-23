@@ -3,7 +3,6 @@ package handlers
 import (
 	"database/sql"
 	"errors"
-	"github.com/NeozonS/go-shortener-ya.git/internal/storage/postgres"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strings"
@@ -20,12 +19,8 @@ func (u *Handlers) GetHandler(w http.ResponseWriter, r *http.Request) {
 		err         error
 		isDeleted   bool
 	)
-	if dr, ok := u.repo.(postgres.DeletableRepository); ok {
-		originalURL, isDeleted, err = dr.GetURLWithDeleted(r.Context(), token)
-	} else {
-		originalURL, err = u.repo.GetURL(r.Context(), token)
-		isDeleted = false
-	}
+	originalURL, isDeleted, err = u.repo.GetURL(r.Context(), token)
+
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		http.Error(w, "Not Found", http.StatusNotFound)

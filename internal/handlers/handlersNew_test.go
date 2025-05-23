@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"github.com/NeozonS/go-shortener-ya.git/internal/server"
+	"github.com/NeozonS/go-shortener-ya.git/internal/storage/deleter"
 	"github.com/NeozonS/go-shortener-ya.git/internal/storage/models"
 	"github.com/NeozonS/go-shortener-ya.git/internal/utils"
 	"github.com/go-chi/chi/v5"
@@ -28,16 +29,20 @@ func NewMockRepo() *MockRepo {
 	}
 }
 
+func MockNewWorker() *deleter.Worker {
+	return &deleter.Worker{}
+}
+
 // GetURL возвращает URL по токену
-func (m *MockRepo) GetURL(ctx context.Context, token string) (string, error) {
+func (m *MockRepo) GetURL(ctx context.Context, token string) (string, bool, error) {
 	url, ok := m.data[token]
 	if !ok {
-		return "", sql.ErrNoRows
+		return "", false, sql.ErrNoRows
 	}
 	if url == "DELETED" {
-		return "", sql.ErrNoRows
+		return "", false, sql.ErrNoRows
 	}
-	return url, nil
+	return url, false, nil
 }
 
 // GetURLWithDeleted — поддерживает флаг удаления
@@ -79,6 +84,9 @@ func (m *MockRepo) GetAllURL(ctx context.Context, userID string) ([]models.LinkP
 		})
 	}
 	return result, nil
+}
+func (m *MockRepo) BatchDeleteURL(ctx context.Context, userID string, URL []string) error {
+	return nil
 }
 
 // Ping — проверка соединения (в моке всегда успешно)
@@ -132,9 +140,10 @@ func TestHandlers_PostHandler(t *testing.T) {
 			reqPost := httptest.NewRequest(http.MethodPost, "/", bytes.NewBufferString(tt.url))
 			ctx := utils.WithUserID(reqPost.Context(), "testUserID")
 			reqPost = reqPost.WithContext(ctx)
+			worker := MockNewWorker()
 			mockRepo := NewMockRepo()
 			config := server.Config{}
-			handler := NewHandlers(mockRepo, config)
+			handler := NewHandlers(worker, mockRepo, config)
 			rr := httptest.NewRecorder()
 			h := http.HandlerFunc(handler.PostHandler)
 			h.ServeHTTP(rr, reqPost)
@@ -203,9 +212,11 @@ func TestHandlers_GetHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			worker := MockNewWorker()
 			mockRepo := NewMockRepo()
 			config := server.Config{}
-			handler := NewHandlers(mockRepo, config)
+			handler := NewHandlers(worker, mockRepo, config)
+
 			reqGet := httptest.NewRequest(http.MethodGet, "http://localhost:8080/"+tt.wants.id, nil)
 			ctx := utils.WithUserID(reqGet.Context(), "testUserID")
 			reqGet = reqGet.WithContext(ctx)
@@ -270,9 +281,10 @@ func TestHandlers_PostAPI(t *testing.T) {
 			reqPost.Header.Set("Content-Type", "application/json")
 			ctx := utils.WithUserID(reqPost.Context(), "testUserID")
 			reqPost = reqPost.WithContext(ctx)
-			repo := NewMockRepo()
+			worker := MockNewWorker()
+			mockRepo := NewMockRepo()
 			config := server.Config{}
-			handle := NewHandlers(repo, config)
+			handle := NewHandlers(worker, mockRepo, config)
 			rr := httptest.NewRecorder()
 			h := http.HandlerFunc(handle.PostAPI)
 			h.ServeHTTP(rr, reqPost)

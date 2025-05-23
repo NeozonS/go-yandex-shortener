@@ -3,7 +3,6 @@ package file
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"github.com/NeozonS/go-shortener-ya.git/internal/storage/models"
 	"io"
 	"os"
@@ -11,8 +10,8 @@ import (
 )
 
 type Storage struct {
-	file *os.File
-	mu   sync.RWMutex
+	filename string
+	mu       sync.RWMutex
 }
 type UserURL struct {
 	UserID string          `json:"user_id"`
@@ -22,7 +21,7 @@ type UserURL struct {
 func (m *Storage) GetURL(ctx context.Context, shortURL string) (string, bool, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	file, err := os.Open(m.file.Name())
+	file, err := os.Open(m.filename)
 	if err != nil {
 		return "", false, err
 	}
@@ -41,12 +40,12 @@ func (m *Storage) GetURL(ctx context.Context, shortURL string) (string, bool, er
 			return user.Links.LongURL, user.Links.Deleted, nil
 		}
 	}
-	return "", false, errors.New("url not found")
+	return "", false, os.ErrNotExist
 }
 func (m *Storage) GetAllURL(ctx context.Context, userID string) ([]models.LinkPair, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	file, err := os.Open(m.file.Name())
+	file, err := os.Open(m.filename)
 	if err != nil {
 		return nil, err
 	}
@@ -67,16 +66,17 @@ func (m *Storage) GetAllURL(ctx context.Context, userID string) ([]models.LinkPa
 			result = append(result, pair.Links)
 		}
 	}
-	if len(result) > 0 {
-		return result, nil
+	if len(result) == 0 {
+		return nil, os.ErrNotExist
 	}
-	return nil, errors.New("user ID not found")
+	return result, nil
 }
 
 func (m *Storage) UpdateURL(ctx context.Context, userID, shortURL, originalURL string) error {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	file, err := os.OpenFile(m.file.Name(), os.O_WRONLY|os.O_APPEND, 0777)
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	file, err := os.OpenFile(m.filename, os.O_WRONLY|os.O_APPEND, 0777)
 	if err != nil {
 		return err
 	}
@@ -87,27 +87,85 @@ func (m *Storage) UpdateURL(ctx context.Context, userID, shortURL, originalURL s
 	return encoder.Encode(&user)
 }
 func (m *Storage) BatchUpdateURL(ctx context.Context, userID string, URLs map[string]string) error {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	file, err := os.OpenFile(m.file.Name(), os.O_WRONLY|os.O_APPEND, 0777)
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	file, err := os.OpenFile(m.filename, os.O_WRONLY|os.O_APPEND, 0777)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 	user := UserURL{}
+	encoder := json.NewEncoder(file)
 	for t, o := range URLs {
 		user = UserURL{UserID: userID, Links: models.LinkPair{ShortURL: t, LongURL: o, Deleted: false}}
+		if err := encoder.Encode(&user); err != nil {
+			return err
+		}
 	}
-	encoder := json.NewEncoder(file)
-	return encoder.Encode(&user)
+
+	return nil
 }
-func NewFileStorage(filename string) (*Storage, error) {
-	file, err := os.OpenFile(filename, os.O_RDONLY|os.O_CREATE, 0666)
+
+func (m *Storage) BatchDeleteURL(ctx context.Context, userID string, shortURL []string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	file, err := os.Open(m.filename)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer file.Close()
-	return &Storage{file: file}, nil
+
+	var allEntries []UserURL
+	decode := json.NewDecoder(file)
+	for {
+		var entry UserURL
+		if err := decode.Decode(&entry); err != nil {
+			if err == io.EOF {
+				break
+			}
+			return err
+		}
+		allEntries = append(allEntries, entry)
+	}
+
+	tokenSet := make(map[string]struct{})
+	for _, t := range shortURL {
+		tokenSet[t] = struct{}{}
+	}
+	for i := range allEntries {
+		if allEntries[i].UserID == userID {
+			if _, ok := tokenSet[allEntries[i].Links.ShortURL]; ok {
+				allEntries[i].Links.Deleted = true
+			}
+		}
+	}
+	tempFile, err := os.CreateTemp("", "urls_temp_*.txt")
+	if err != nil {
+		return err
+	}
+	defer tempFile.Close()
+
+	encoder := json.NewEncoder(tempFile)
+	for _, entry := range allEntries {
+		if err := encoder.Encode(entry); err != nil {
+			return err
+		}
+	}
+	if err := os.Rename(tempFile.Name(), m.filename); err != nil {
+		return err
+	}
+	return nil
+}
+func NewFileStorage(filename string) (*Storage, error) {
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		file, err := os.Create(filename)
+		if err != nil {
+			return nil, err
+		}
+		file.Close()
+	}
+	return &Storage{filename: filename}, nil
 }
 
 func (m *Storage) Ping(ctx context.Context) error {

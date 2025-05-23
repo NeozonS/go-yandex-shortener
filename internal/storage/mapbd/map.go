@@ -67,6 +67,19 @@ func (m *MapBD) BatchUpdateURL(ctx context.Context, userID string, URLs map[stri
 	}
 	return nil
 }
+func (m *MapBD) BatchDeleteURL(ctx context.Context, userID string, URLs []string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, token := range URLs {
+		if urlMap, ok := m.Urls[userID]; ok {
+			if u, ok := urlMap[token]; ok {
+				u.Deleted = true
+				urlMap[token] = u
+			}
+		}
+	}
+	return nil
+}
 func New() (*MapBD, error) {
 	return &MapBD{Urls: make(map[string]map[string]URLData)}, nil
 }

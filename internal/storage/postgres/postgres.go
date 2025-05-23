@@ -5,23 +5,17 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/NeozonS/go-shortener-ya.git/internal/storage"
 	"github.com/NeozonS/go-shortener-ya.git/internal/storage/models"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-type DeletableRepository interface {
-	storage.Repository
-	GetURLWithDeleted(ctx context.Context, shortURL string) (string, bool, error)
-}
-
 type PostgresDB struct {
 	db *sql.DB
 }
 
-func (p *PostgresDB) GetURLWithDeleted(ctx context.Context, shortURL string) (string, bool, error) {
+func (p *PostgresDB) GetURL(ctx context.Context, shortURL string) (string, bool, error) {
 	query := `
 	SELECT original_url, is_deleted
 	FROM short_urls
@@ -36,20 +30,6 @@ func (p *PostgresDB) GetURLWithDeleted(ctx context.Context, shortURL string) (st
 	}
 
 	return originalURL, isDeleted, nil
-}
-
-func (p *PostgresDB) GetURL(ctx context.Context, shortURL string) (string, error) {
-	query := `
-	SELECT original_url
-	FROM short_urls
-	WHERE token = $1`
-
-	var originalURL string
-	err := p.db.QueryRowContext(ctx, query, shortURL).Scan(&originalURL)
-	if err != nil {
-		return "", fmt.Errorf("failed to get URL: %w", err)
-	}
-	return originalURL, nil
 }
 
 func (p *PostgresDB) GetAllURL(ctx context.Context, userID string) ([]models.LinkPair, error) {

@@ -3,9 +3,11 @@ package handlers
 import (
 	"github.com/NeozonS/go-shortener-ya.git/internal/server"
 	"github.com/NeozonS/go-shortener-ya.git/internal/storage"
+	"github.com/NeozonS/go-shortener-ya.git/internal/storage/deleter"
 )
 
 type Handlers struct {
+	worker *deleter.Worker
 	repo   storage.Repository
 	config server.Config
 }
@@ -22,6 +24,6 @@ type BatchResponse struct {
 	ShortURL      string `json:"short_url"`
 }
 
-func NewHandlers(repo storage.Repository, config server.Config) *Handlers {
-	return &Handlers{repo, config}
+func NewHandlers(worker *deleter.Worker, repo storage.Repository, config server.Config) *Handlers {
+	return &Handlers{worker, repo, config}
 }

@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/NeozonS/go-shortener-ya.git/internal/storage/postgres"
 	"github.com/NeozonS/go-shortener-ya.git/internal/utils"
 	"net/http"
 )
@@ -20,7 +19,7 @@ func (u *Handlers) DeleteAPIUserURLsHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	for _, id := range ids {
-		postgres.EnqueueURLForDeleteion(userID, id)
+		u.worker.EnqueueURLForDeleteion(userID, id)
 	}
 	w.WriteHeader(http.StatusAccepted)
 

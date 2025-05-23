@@ -6,6 +6,7 @@ import (
 	"github.com/NeozonS/go-shortener-ya.git/internal/middleware"
 	"github.com/NeozonS/go-shortener-ya.git/internal/server"
 	"github.com/NeozonS/go-shortener-ya.git/internal/storage"
+	"github.com/NeozonS/go-shortener-ya.git/internal/storage/deleter"
 	"github.com/NeozonS/go-shortener-ya.git/internal/storage/file"
 	"github.com/NeozonS/go-shortener-ya.git/internal/storage/mapbd"
 	"github.com/NeozonS/go-shortener-ya.git/internal/storage/postgres"
@@ -13,26 +14,27 @@ import (
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"log"
 	"net/http"
+	"time"
 )
 
 func main() {
 
 	config := server.NewConfig()
-
 	ctx := context.Background()
 
 	repositories, err := choiseStorage(config)
 	if err != nil {
 		log.Fatal(err)
 	}
+	worker := deleter.NewWorker(repositories, 100, 2*time.Second)
+	worker.InitDeleteWorker(ctx)
 	if pgStore, ok := repositories.(*postgres.PostgresDB); ok {
 		if err := pgStore.CreateTable(context.Background()); err != nil {
 			log.Fatalf("Failed to create tables: %v", err)
 		}
-		pgStore.InitDeleteWorker(ctx)
 	}
 
-	handler := handlers.NewHandlers(repositories, config)
+	handler := handlers.NewHandlers(worker, repositories, config)
 
 	r := chi.NewRouter()
 	r.Use(middleware.AuthMiddleware)
